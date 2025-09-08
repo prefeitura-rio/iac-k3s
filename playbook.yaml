@@ -1,0 +1,70 @@
+---
+- name: K3S deploy
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install required packages for Incus
+      ansible.builtin.apt:
+        update_cache: true
+        install_recommends: true
+        name: incus
+        state: present
+
+    - name: Create incus-admin group if it doesn't exist
+      ansible.builtin.group:
+        name: incus-admin
+        state: present
+
+    - name: Add user to incus-admin group
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        groups: incus-admin
+        append: yes
+
+    - name: Create Incus initialization service
+      ansible.builtin.copy:
+        content: |
+          [Unit]
+          Description=Initialize Incus
+          After=incus.service
+          Wants=incus.service
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/incus admin init --minimal
+          User={{ ansible_user }}
+          RemainAfterExit=yes
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/incus-init.service
+        mode: "0644"
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd_service:
+        daemon_reload: yes
+
+    - name: Enable and start Incus initialization service
+      ansible.builtin.systemd_service:
+        name: incus-init
+        state: started
+        enabled: yes
+
+    - name: Configure Incus to listen on network interface
+      ansible.builtin.shell: |
+        incus config set core.https_address '[::]:8443'
+      become_user: "{{ ansible_user }}"
+
+    - name: Generate trust token for client
+      ansible.builtin.shell: incus config trust add local-client
+      become_user: "{{ ansible_user }}"
+      register: trust_token
+      no_log: true
+
+    - name: Display trust token
+      ansible.builtin.debug:
+        msg: "Trust token: {{ trust_token.stdout_lines[-1] }}"
+        verbosity: 0
+      vars:
+        ansible_no_log: false

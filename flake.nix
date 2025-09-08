@@ -24,7 +24,10 @@
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             ansible
+            incus
+            infisical
             just
+            terraform
             uv
           ];
         };

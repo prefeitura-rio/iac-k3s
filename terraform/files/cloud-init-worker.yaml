@@ -1,0 +1,17 @@
+#cloud-config
+package_update: true
+packages:
+  - curl
+write_files:
+  - path: /var/lib/cloud/scripts/per-once/install-k3s-agent.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e
+
+      until curl -k https://${master_ip}:6443/ping; do
+        echo "Waiting for K3s server..."
+        sleep 10
+      done
+
+      curl -sfL https://get.k3s.io | K3S_URL=https://${master_ip}:6443 K3S_TOKEN=${k3s_token} sh -s - agent

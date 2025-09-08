@@ -1,1 +1,7 @@
+.claude
 .direnv
+.env
+.password
+terraform/.terraform
+terraform/*.tfstate*
+terraform/files/kubeconfig
