@@ -26,6 +26,22 @@ resource "helm_release" "airbyte" {
     {
       name  = "webapp.image.tag"
       value = "1.7.4"
+    },
+    {
+      name  = "global.jobs.resources.limits.cpu"
+      value = "1.2"
+    },
+    {
+      name  = "global.jobs.resources.requests.cpu"
+      value = "0.4"
+    },
+    {
+      name  = "global.jobs.resources.limits.memory"
+      value = "2.5Gi"
+    },
+    {
+      name  = "global.jobs.resources.requests.memory"
+      value = "1Gi"
     }
   ]
 }
