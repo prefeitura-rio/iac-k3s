@@ -14,5 +14,13 @@ terraform {
       source  = "alekc/kubectl"
       version = ">= 2.1.3"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = ">= 3.2.4"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = ">= 2.5.3"
+    }
   }
 }

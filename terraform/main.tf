@@ -126,7 +126,13 @@ data "local_file" "kubeconfig" {
   depends_on = [null_resource.wait_for_k3s]
 }
 
-module "k8s" {
-  source          = "./k8s"
+module "deployments" {
+  source          = "./deployments"
+  github          = var.github
+  infisical       = var.infisical
+  k3s_master      = incus_instance.k3s_master
+  k3s_workers     = incus_instance.k3s_workers
   kubeconfig_path = local.kubeconfig_ready
+  prefect_address = var.prefect_address
+  tailscale       = var.tailscale
 }

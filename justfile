@@ -1,3 +1,11 @@
+bucket := "bucket=iplanrio-dia-terraform"
+tfplan := "terraform.tfplan"
+
+# Authenticate with Google Cloud and Infisical
+@auth:
+    gcloud auth application-default login
+    infisical login
+
 # Run the Ansible playbook
 @deploy:
     ansible-playbook -i inventory.ini playbook.yaml
@@ -17,3 +25,18 @@
 # Stop all port forwarding processes
 @stop-forward:
     -pkill -f "ssh.*k3s.squirrel-regulus.ts.net"
+
+# Init Terraform with backend config
+@init args="":
+    cd terraform && terraform init -backend-config {{bucket}} -upgrade {{args}} -reconfigure
+
+# Plan Terraform changes
+@plan:
+    cd terraform && infisical run -- terraform plan -out {{tfplan}}
+
+# Destroy Terraform-managed infrastructure
+@destroy:
+    cd terraform && infisical run -- terraform destroy -auto-approve
+# Apply Terraform changes
+@apply:
+    cd terraform && infisical run -- terraform apply {{tfplan}}

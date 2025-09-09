@@ -49,5 +49,47 @@ variable "incus_token" {
 variable "incus_host" {
   description = "The hostname or IP of the Incus server"
   type        = string
-  default     = "k3s.squirrel-regulus.ts.net"
+}
+
+variable "infisical_address" {
+  description = "The address of the Infisical instance"
+  type        = string
+}
+
+variable "prefect_address" {
+  description = "The address of the Prefect server instance"
+  type        = string
+}
+
+variable "github" {
+  description = "GitHub credentials for accessing private container registry"
+  sensitive   = true
+  type = object({
+    username = string
+    password = string
+    email    = string
+  })
+}
+
+variable "tailscale" {
+  description = "Tailscale configuration"
+  sensitive   = true
+  type = object({
+    tailnet = string
+    suffix  = string
+    oauth = object({
+      client_id     = string
+      client_secret = string
+    })
+  })
+}
+
+variable "infisical" {
+  description = "Infisical configuration"
+  sensitive   = true
+  type = object({
+    address       = string
+    client_id     = string
+    client_secret = string
+  })
 }
