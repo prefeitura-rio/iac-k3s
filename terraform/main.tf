@@ -101,19 +101,19 @@ resource "null_resource" "wait_for_k3s" {
   depends_on = [incus_instance.k3s_workers]
 
   provisioner "local-exec" {
-    command = "scp ./scripts/get-kubeconfig.sh k3s@${var.incus_host}:/tmp"
+    command = "scp ./scripts/get-kubeconfig.sh k3s@${var.incus.host}:/tmp"
   }
 
   provisioner "local-exec" {
-    command = "ssh k3s@${var.incus_host} 'bash /tmp/get-kubeconfig.sh'"
+    command = "ssh k3s@${var.incus.host} 'bash /tmp/get-kubeconfig.sh'"
   }
 
   provisioner "local-exec" {
-    command = "scp k3s@${var.incus_host}:/tmp/kubeconfig ./files/kubeconfig"
+    command = "scp k3s@${var.incus.host}:/tmp/kubeconfig ./files/kubeconfig"
   }
 
   provisioner "local-exec" {
-    command = "ssh -f -N -L 6443:${incus_instance.k3s_master.ipv4_address}:6443 k3s@${var.incus_host}"
+    command = "ssh -f -N -L 6443:${incus_instance.k3s_master.ipv4_address}:6443 k3s@${var.incus.host}"
   }
 
   triggers = {

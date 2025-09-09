@@ -40,25 +40,17 @@ variable "network_cidr" {
   default     = "10.0.100.1/24"
 }
 
-variable "incus_token" {
-  description = "The Incus remote token for the k3s remote"
-  type        = string
-  sensitive   = true
-}
-
-variable "incus_host" {
-  description = "The hostname or IP of the Incus server"
-  type        = string
-}
-
-variable "infisical_address" {
-  description = "The address of the Infisical instance"
-  type        = string
-}
-
 variable "prefect_address" {
   description = "The address of the Prefect server instance"
   type        = string
+}
+
+variable "incus" {
+  description = "The Incus remote configuration"
+  type = object({
+    host  = string
+    token = string
+  })
 }
 
 variable "github" {

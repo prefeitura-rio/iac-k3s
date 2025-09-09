@@ -5,8 +5,8 @@ provider "incus" {
   remote {
     name    = "k3s"
     scheme  = "https"
-    address = "localhost"
-    token   = var.incus_token
+    address = var.incus.host
+    token   = var.incus.token
   }
 }
 
