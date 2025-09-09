@@ -68,6 +68,7 @@ variable "tailscale" {
   sensitive   = true
   type = object({
     tailnet = string
+    domain  = string
     suffix  = string
     oauth = object({
       client_id     = string

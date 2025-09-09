@@ -20,7 +20,7 @@ tfplan := "terraform.tfplan"
 
 # Forward K3s API port from remote to local (via master container)
 @k3s-forward:
-    ssh -f -N -L 6443:$(cd terraform && terraform output -raw k3s_master_ip):6443 k3s@k3s.squirrel-regulus.ts.net
+    ssh -f -N -L 6443:$(terraform output -raw k3s_master_ip):6443 k3s@k3s.squirrel-regulus.ts.net
 
 # Stop all port forwarding processes
 @stop-forward:
@@ -28,15 +28,15 @@ tfplan := "terraform.tfplan"
 
 # Init Terraform with backend config
 @init args="":
-    cd terraform && terraform init -backend-config {{bucket}} -upgrade {{args}} -reconfigure
+    terraform init -backend-config {{bucket}} -upgrade {{args}} -reconfigure
 
 # Plan Terraform changes
 @plan:
-    cd terraform && infisical run -- terraform plan -out {{tfplan}}
+    infisical run -- terraform plan -out {{tfplan}}
 
 # Destroy Terraform-managed infrastructure
 @destroy:
-    cd terraform && infisical run -- terraform destroy -auto-approve
+    infisical run -- terraform destroy -auto-approve
 # Apply Terraform changes
 @apply:
-    cd terraform && infisical run -- terraform apply {{tfplan}}
+    infisical run -- terraform apply {{tfplan}}

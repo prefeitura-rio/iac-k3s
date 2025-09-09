@@ -1,4 +1,4 @@
-resource "kubernetes_namespace" "prefect_server" {
+resource "kubernetes_namespace" "prefect" {
   metadata {
     name = "prefect"
   }
@@ -34,7 +34,7 @@ resource "helm_release" "prefect_worker" {
   version    = "2025.9.5190948"
   namespace  = kubernetes_namespace.prefect.metadata[0].name
   values = [templatefile("${path.module}/yamls/prefect-worker-values.yaml", {
-    prefect_server_url       = var.prefect_address
+    prefect_server_url       = "${var.prefect_address}/api"
     prefect_work_pool        = "k3s-pool"
     image_pull_secret_name   = kubernetes_secret.gh_registry_config.metadata[0].name
     envs_secret_name         = "prefect-jobs-secrets-staging"
@@ -91,7 +91,7 @@ resource "kubectl_manifest" "prefect_worker_cluster_role_binding" {
   })
 }
 
-resource "kubectl_mainfest" "prefect_server_egress" {
+resource "kubectl_manifest" "prefect_server_egress" {
   yaml_body = yamlencode({
     apiVersion = "v1"
     kind       = "Service"

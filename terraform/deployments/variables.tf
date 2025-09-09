@@ -28,6 +28,7 @@ variable "tailscale" {
   description = "Tailscale configuration"
   type = object({
     tailnet = string
+    domain  = string
     suffix  = string
     oauth = object({
       client_id     = string

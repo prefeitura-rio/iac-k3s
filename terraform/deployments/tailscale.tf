@@ -6,7 +6,7 @@ resource "helm_release" "tailscale_operator" {
   name             = "tailscale-operator"
   repository       = "https://pkgs.tailscale.com/helmcharts"
   chart            = "tailscale-operator"
-  version          = "1.84.5"
+  version          = "1.86.5"
   namespace        = "tailscale"
   create_namespace = true
 
@@ -45,10 +45,65 @@ resource "kubectl_manifest" "tailscale_operator_config" {
   })
 }
 
+resource "kubectl_manifest" "tailscale_egress_proxyclass" {
+  depends_on = [helm_release.tailscale_operator]
+  yaml_body = yamlencode({
+    apiVersion = "tailscale.com/v1alpha1"
+    kind       = "ProxyClass"
+    metadata = {
+      name = "egress"
+    }
+    spec = {
+      tailscale = {
+        acceptRoutes = true
+      }
+    }
+  })
+}
+
+resource "kubectl_manifest" "prefect_egress_service" {
+  depends_on = [kubectl_manifest.tailscale_egress_proxyclass]
+  yaml_body = yamlencode({
+    apiVersion = "v1"
+    kind       = "Service"
+    metadata = {
+      name      = "worker-k3s"
+      namespace = "prefect"
+      annotations = {
+        "tailscale.com/proxy-class"  = "egress"
+        "tailscale.com/tags"         = "tag:k8s-${var.tailscale.suffix}"
+        "tailscale.com/tailnet-fqdn" = "prefect.${var.tailscale.domain}"
+      }
+    }
+    spec = {
+      type         = "ExternalName"
+      externalName = "placeholder"
+    }
+  })
+}
+
 resource "null_resource" "get_dns_ip" {
   depends_on = [kubectl_manifest.tailscale_operator_config]
   provisioner "local-exec" {
-    command = "kubectl get dnsconfig ts-dns -o jsonpath='{.status.nameserver.ip}' > /tmp/nameserver_ip"
+    command = <<-EOF
+      kubectl wait --for=condition=Ready dnsconfig/ts-dns --timeout=300s || true
+
+      for i in {1..30}; do
+        IP=$(kubectl get dnsconfig ts-dns -o jsonpath='{.status.nameserver.ip}' 2>/dev/null || echo "")
+
+        if [ -n "$IP" ] && [ "$IP" != "" ]; then
+          echo "$IP" > /tmp/nameserver_ip
+          exit 0
+        fi
+
+        echo "Waiting for nameserver IP... attempt $i/30"
+        sleep 10
+      done
+
+      echo "Failed to get nameserver IP from Tailscale DNSConfig"
+      echo "Using fallback IP"
+      echo "100.100.100.100" > /tmp/nameserver_ip
+    EOF
   }
 }
 

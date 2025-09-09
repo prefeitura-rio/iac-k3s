@@ -6,14 +6,14 @@ resource "helm_release" "infisical_secrets_operator" {
   name             = "infisical-secrets-operator"
   repository       = "https://dl.cloudsmith.io/public/infisical/helm-charts/helm/charts/"
   chart            = "secrets-operator"
-  namespace        = "infisical"
+  namespace        = "infisical-operator-system"
   create_namespace = true
 }
 
 resource "kubernetes_config_map" "infisical_operator_global_settings" {
   metadata {
     name      = "infisical-config"
-    namespace = kubernetes_namespace.infisical_operator_system.metadata[0].name
+    namespace = helm_release.infisical_secrets_operator.namespace
   }
 
   data = {
