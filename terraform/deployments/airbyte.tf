@@ -29,19 +29,19 @@ resource "helm_release" "airbyte" {
     },
     {
       name  = "global.jobs.resources.limits.cpu"
-      value = "1.2"
+      value = "7"
     },
     {
       name  = "global.jobs.resources.requests.cpu"
-      value = "0.4"
+      value = "3"
     },
     {
       name  = "global.jobs.resources.limits.memory"
-      value = "2.5Gi"
+      value = "8Gi"
     },
     {
       name  = "global.jobs.resources.requests.memory"
-      value = "1Gi"
+      value = "5Gi"
     }
   ]
 }
