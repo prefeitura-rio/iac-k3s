@@ -7,7 +7,7 @@ variable "cluster_name" {
 variable "worker_count" {
   description = "Number of K3s worker nodes"
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "container_image" {
@@ -19,19 +19,19 @@ variable "container_image" {
 variable "cpu_limit" {
   description = "CPU limit for containers"
   type        = string
-  default     = "2"
+  default     = "3"
 }
 
 variable "memory_limit" {
   description = "Memory limit for containers"
   type        = string
-  default     = "6GB"
+  default     = "10GB"
 }
 
 variable "disk_size" {
   description = "Disk size for containers"
   type        = string
-  default     = "30GB"
+  default     = "40GB"
 }
 
 variable "network_cidr" {
