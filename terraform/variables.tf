@@ -19,13 +19,13 @@ variable "container_image" {
 variable "cpu_limit" {
   description = "CPU limit for containers"
   type        = string
-  default     = "3"
+  default     = "5"
 }
 
 variable "memory_limit" {
   description = "Memory limit for containers"
   type        = string
-  default     = "10GB"
+  default     = "20GB"
 }
 
 variable "disk_size" {

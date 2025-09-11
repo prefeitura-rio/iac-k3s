@@ -18,6 +18,7 @@ resource "incus_profile" "k3s_profile" {
   config = {
     "limits.cpu"                                = var.cpu_limit
     "limits.memory"                             = var.memory_limit
+    "limits.cpu.allowance"                      = "100%"
     "security.nesting"                          = "true"
     "security.privileged"                       = "true"
     "security.syscalls.intercept.mknod"         = "true"
