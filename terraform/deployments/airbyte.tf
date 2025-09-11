@@ -5,6 +5,7 @@ resource "helm_release" "airbyte" {
   version          = "1.8.2"
   namespace        = "airbyte"
   create_namespace = true
+  timeout          = 3600
 
   set = [
     {
@@ -26,22 +27,6 @@ resource "helm_release" "airbyte" {
     {
       name  = "webapp.image.tag"
       value = "1.7.4"
-    },
-    {
-      name  = "global.jobs.resources.limits.cpu"
-      value = "7"
-    },
-    {
-      name  = "global.jobs.resources.requests.cpu"
-      value = "3"
-    },
-    {
-      name  = "global.jobs.resources.limits.memory"
-      value = "8Gi"
-    },
-    {
-      name  = "global.jobs.resources.requests.memory"
-      value = "5Gi"
     }
   ]
 }
