@@ -86,7 +86,7 @@ resource "null_resource" "get_dns_ip" {
   depends_on = [kubectl_manifest.tailscale_operator_config]
   provisioner "local-exec" {
     command = <<-EOF
-      kubectl wait --for=condition=Ready dnsconfig/ts-dns --timeout=300s || true
+      kubectl wait --for=condition=NameserverReady dnsconfig/ts-dns --timeout=300s || true
 
       for i in {1..30}; do
         IP=$(kubectl get dnsconfig ts-dns -o jsonpath='{.status.nameserver.ip}' 2>/dev/null || echo "")
@@ -151,11 +151,11 @@ resource "kubectl_manifest" "coredns_config" {
         import /etc/coredns/custom/*.server
       EOF
       NodeHosts = <<-EOF
-        ${var.k3s_master.ipv4_address} ${var.k3s_master.name}
-        %{for worker in var.k3s_workers~}
-        ${worker.ipv4_address} ${worker.name}
-        %{endfor~}
-      EOF
+${var.k3s_master.ipv4_address} ${var.k3s_master.name}
+%{for worker in var.k3s_workers~}
+${worker.ipv4_address} ${worker.name}
+%{endfor~}
+EOF
     }
   })
 }

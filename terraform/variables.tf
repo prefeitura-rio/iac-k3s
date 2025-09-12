@@ -1,7 +1,7 @@
 variable "cluster_name" {
   description = "Name of the K3s cluster"
   type        = string
-  default     = "k3s-cluster"
+  default     = "k3s"
 }
 
 variable "worker_count" {
