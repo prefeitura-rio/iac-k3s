@@ -10,7 +10,7 @@ resource "helm_release" "airbyte" {
   set = [
     {
       name  = "global.airbyteUrl"
-      value = "airbyte-${var.tailscale.suffix}.${var.tailscale.domain}"
+      value = "airbyte.${var.tailscale.domain}"
     },
     {
       name  = "global.auth.enabled"
@@ -42,7 +42,7 @@ resource "kubectl_manifest" "airbyte_tailscale_ingress" {
       namespace = helm_release.airbyte.namespace
       annotations = {
         "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix}"
-        "tailscale.com/hostname" = "airbyte-${var.tailscale.suffix}"
+        "tailscale.com/hostname" = "airbyte"
       }
     }
 
@@ -60,7 +60,7 @@ resource "kubectl_manifest" "airbyte_tailscale_ingress" {
       tls = [
         {
           hosts = [
-            "airbyte-${var.tailscale.suffix}.${var.tailscale.domain}"
+            "airbyte.${var.tailscale.domain}"
           ]
         }
       ]
