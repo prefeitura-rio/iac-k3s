@@ -86,3 +86,13 @@ variable "infisical" {
     client_secret = string
   })
 }
+
+variable "cloudsql_proxies" {
+  description = "CloudSQL proxy configurations"
+  type = map(object({
+    instance_name   = string
+    instance_region = string
+    project_id      = string
+    sa_key          = string
+  }))
+}

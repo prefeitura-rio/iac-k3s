@@ -128,12 +128,13 @@ data "local_file" "kubeconfig" {
 }
 
 module "deployments" {
-  source          = "./deployments"
-  github          = var.github
-  infisical       = var.infisical
-  k3s_master      = incus_instance.k3s_master
-  k3s_workers     = incus_instance.k3s_workers
-  kubeconfig_path = local.kubeconfig_ready
-  prefect_address = var.prefect_address
-  tailscale       = var.tailscale
+  source           = "./deployments"
+  cloudsql_proxies = var.cloudsql_proxies
+  github           = var.github
+  infisical        = var.infisical
+  k3s_master       = incus_instance.k3s_master
+  k3s_workers      = incus_instance.k3s_workers
+  kubeconfig_path  = local.kubeconfig_ready
+  prefect_address  = var.prefect_address
+  tailscale        = var.tailscale
 }

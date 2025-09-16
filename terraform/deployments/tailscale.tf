@@ -92,7 +92,7 @@ resource "null_resource" "get_dns_ip" {
         IP=$(kubectl get dnsconfig ts-dns -o jsonpath='{.status.nameserver.ip}' 2>/dev/null || echo "")
 
         if [ -n "$IP" ] && [ "$IP" != "" ]; then
-          echo "$IP" > /tmp/nameserver_ip
+          echo "$IP" > ./files/nameserver_ip.txt
           exit 0
         fi
 
@@ -102,13 +102,13 @@ resource "null_resource" "get_dns_ip" {
 
       echo "Failed to get nameserver IP from Tailscale DNSConfig"
       echo "Using fallback IP"
-      echo "100.100.100.100" > /tmp/nameserver_ip
+      echo "100.100.100.100" > ./files/nameserver_ip.txt
     EOF
   }
 }
 
 data "local_file" "nameserver_ip" {
-  filename   = "/tmp/nameserver_ip"
+  filename   = "./files/nameserver_ip.txt"
   depends_on = [null_resource.get_dns_ip]
 }
 
