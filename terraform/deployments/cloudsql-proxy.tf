@@ -57,9 +57,9 @@ resource "kubernetes_deployment" "cloudsql_proxy" {
       spec {
         container {
           name  = each.key
-          image = "gcr.io/cloudsql-docker/gce-proxy:1.23.0"
+          image = "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1"
           port {
-            container_port = 3306
+            container_port = each.value.port
             protocol       = "TCP"
           }
           env_from {
@@ -67,13 +67,13 @@ resource "kubernetes_deployment" "cloudsql_proxy" {
               name = kubernetes_config_map.cloudsql_proxy[each.key].metadata[0].name
             }
           }
-          env {
-            name  = "GOOGLE_APPLICATION_CREDENTIALS"
-            value = "/var/secrets/google/service-account-key.json"
-          }
-          command = [
-            "/cloud_sql_proxy",
-            "-instances=$(CLOUD_SQL_PROJECT_ID):$(CLOUD_SQL_INSTANCE_REGION):$(CLOUD_SQL_INSTANCE_NAME)=tcp:0.0.0.0:3306"
+          args = [
+            "--structured-logs",
+            "--port=${each.value.port}",
+            "--address=0.0.0.0",
+            "--private-ip",
+            "--credentials-file=/var/secrets/google/service-account-key.json",
+            "$(CLOUD_SQL_PROJECT_ID):$(CLOUD_SQL_INSTANCE_REGION):$(CLOUD_SQL_INSTANCE_NAME)"
           ]
           volume_mount {
             name       = "service-account-key"
@@ -122,10 +122,10 @@ resource "kubernetes_service" "cloudsql_proxy" {
       app = each.key
     }
     port {
-      port        = 3306
+      port        = each.value.port
       protocol    = "TCP"
       name        = each.key
-      target_port = 3306
+      target_port = each.value.port
     }
     type = "ClusterIP"
   }

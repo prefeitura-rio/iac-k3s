@@ -64,5 +64,6 @@ variable "cloudsql_proxies" {
     instance_region = string
     project_id      = string
     sa_key          = string
+    port            = string
   }))
 }
