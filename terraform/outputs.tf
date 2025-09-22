@@ -6,5 +6,5 @@ output "k3s_master_ip" {
 output "kubeconfig_path" {
   description = "Path to the kubeconfig file"
   value       = abspath("./kubeconfig")
-  depends_on  = [null_resource.wait_for_k3s]
+  depends_on  = [null_resource.get_kubeconfig]
 }

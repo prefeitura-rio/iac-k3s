@@ -95,6 +95,7 @@ variable "cloudsql_proxies" {
     project_id      = string
     sa_key          = string
     port            = string
+    private         = optional(bool, false)
   }))
 }
 
@@ -107,4 +108,14 @@ variable "rancher" {
     checksum     = string
     install_uuid = string
   })
+}
+
+variable "jump_host" {
+  description = "Jump host for SSH connections"
+  type        = string
+}
+
+variable "target_host" {
+  description = "Target host for SSH connections"
+  type        = string
 }

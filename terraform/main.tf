@@ -98,23 +98,24 @@ resource "random_password" "k3s_token" {
   special = false
 }
 
-resource "null_resource" "wait_for_k3s" {
+resource "null_resource" "get_kubeconfig" {
   depends_on = [incus_instance.k3s_workers]
 
   provisioner "local-exec" {
-    command = "scp ./scripts/get-kubeconfig.sh k3s@${var.incus.host}:/tmp"
+    command = <<-EOF
+      until incus exec ${incus_instance.k3s_master.name} -- k3s kubectl get nodes; do
+        echo "Waiting for K3s API to be ready..."
+        sleep 10
+      done
+    EOF
   }
 
   provisioner "local-exec" {
-    command = "ssh k3s@${var.incus.host} 'bash /tmp/get-kubeconfig.sh'"
+    command = "incus file pull ${incus_instance.k3s_master.name}/etc/rancher/k3s/k3s.yaml ./files/kubeconfig"
   }
 
   provisioner "local-exec" {
-    command = "scp k3s@${var.incus.host}:/tmp/kubeconfig ./files/kubeconfig"
-  }
-
-  provisioner "local-exec" {
-    command = "ssh -f -N -L 6443:${incus_instance.k3s_master.ipv4_address}:6443 k3s@${var.incus.host}"
+    command = "if ! netstat -tlnp 2>/dev/null | grep -q ':6443.*LISTEN'; then ssh -f -N -L 6443:${incus_instance.k3s_master.ipv4_address}:6443 -J ${var.jump_host} k3s@${var.target_host}; fi"
   }
 
   triggers = {
@@ -124,7 +125,7 @@ resource "null_resource" "wait_for_k3s" {
 
 data "local_file" "kubeconfig" {
   filename   = "./files/kubeconfig"
-  depends_on = [null_resource.wait_for_k3s]
+  depends_on = [null_resource.get_kubeconfig]
 }
 
 module "deployments" {
