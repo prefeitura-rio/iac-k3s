@@ -8,4 +8,14 @@ write_files:
     content: |
       #!/bin/bash
       set -e
-      curl -sfL https://get.k3s.io | K3S_TOKEN=${k3s_token} sh -s - --write-kubeconfig-mode 644
+      curl -sfL https://get.k3s.io | K3S_TOKEN=${k3s_token} sh -s - \
+        --write-kubeconfig-mode 644 \
+        --kubelet-arg="image-gc-high-threshold=75" \
+        --kubelet-arg="image-gc-low-threshold=60" \
+        --kubelet-arg="container-log-max-size=10Mi" \
+        --kubelet-arg="container-log-max-files=3" \
+        --kubelet-arg="eviction-hard=memory.available<100Mi,nodefs.available<1Gi,imagefs.available<1Gi" \
+        --kubelet-arg="eviction-soft=memory.available<200Mi,nodefs.available<1.5Gi" \
+        --kubelet-arg="eviction-soft-grace-period=memory.available=2m,nodefs.available=2m" \
+        --kubelet-arg="eviction-max-pod-grace-period=60" \
+        --kubelet-arg="volume-stats-agg-period=1m"

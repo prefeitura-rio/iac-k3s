@@ -16,12 +16,9 @@ target_host := env("TARGET_HOST")
 @ping:
     ansible all -i inventory.ini -m ping
 
-# Forward Incus API port from remote to local
-@incus-forward:
+# Forward Incus API and k8s API ports from remote to local
+@forward:
     ssh -f -N -L 8443:localhost:8443 -J {{jump_host}} k3s@{{target_host}}
-
-# Forward K3s API port from remote to local
-@k3s-forward:
     ssh -f -N -L 6443:$(terraform output -raw k3s_master_ip):6443 -J {{jump_host}} k3s@{{target_host}}
 
 # Stop all port forwarding processes
