@@ -65,6 +65,7 @@ variable "cloudsql_proxies" {
     project_id      = string
     sa_key          = string
     port            = string
+    private         = optional(bool, true)
   }))
 }
 

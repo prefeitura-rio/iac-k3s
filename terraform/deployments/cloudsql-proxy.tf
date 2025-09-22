@@ -67,14 +67,14 @@ resource "kubernetes_deployment" "cloudsql_proxy" {
               name = kubernetes_config_map.cloudsql_proxy[each.key].metadata[0].name
             }
           }
-          args = [
+          args = compact([
             "--structured-logs",
             "--port=${each.value.port}",
             "--address=0.0.0.0",
-            "--private-ip",
+            each.value.private ? "--private-ip" : null,
             "--credentials-file=/var/secrets/google/service-account-key.json",
             "$(CLOUD_SQL_PROJECT_ID):$(CLOUD_SQL_INSTANCE_REGION):$(CLOUD_SQL_INSTANCE_NAME)"
-          ]
+          ])
           volume_mount {
             name       = "service-account-key"
             mount_path = "/var/secrets/google"
