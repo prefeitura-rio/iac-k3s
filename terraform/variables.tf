@@ -97,3 +97,14 @@ variable "cloudsql_proxies" {
     port            = string
   }))
 }
+
+variable "rancher" {
+  description = "Rancher configuration"
+  sensitive   = true
+  type = object({
+    url          = string
+    token        = string
+    checksum     = string
+    install_uuid = string
+  })
+}
