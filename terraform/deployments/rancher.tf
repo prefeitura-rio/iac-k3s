@@ -97,13 +97,19 @@ resource "kubernetes_secret" "cattle_credentials" {
   type = "Opaque"
 
   data = {
-    url       = base64encode(var.rancher.url)
-    token     = base64encode(var.rancher.token)
+    url       = var.rancher.url
+    token     = var.rancher.token
     namespace = ""
   }
 }
 
 resource "kubernetes_deployment" "cattle_cluster_agent" {
+  depends_on = [
+    kubernetes_cluster_role_binding.cattle_admin_binding,
+    kubernetes_secret.cattle_credentials,
+    kubectl_manifest.rancher_egress_service
+  ]
+
   metadata {
     name      = "cattle-cluster-agent"
     namespace = kubernetes_namespace.cattle_system.metadata[0].name
@@ -261,7 +267,7 @@ resource "kubernetes_deployment" "cattle_cluster_agent" {
 
           env {
             name  = "STRICT_VERIFY"
-            value = "true"
+            value = "false"
           }
 
           volume_mount {
@@ -289,14 +295,11 @@ resource "kubernetes_deployment" "cattle_cluster_agent" {
       }
     }
   }
-
-  depends_on = [
-    kubernetes_cluster_role_binding.cattle_admin_binding,
-    kubernetes_secret.cattle_credentials
-  ]
 }
 
 resource "kubernetes_service" "cattle_cluster_agent" {
+  depends_on = [kubernetes_deployment.cattle_cluster_agent]
+
   metadata {
     name      = "cattle-cluster-agent"
     namespace = kubernetes_namespace.cattle_system.metadata[0].name
@@ -323,3 +326,23 @@ resource "kubernetes_service" "cattle_cluster_agent" {
   }
 }
 
+resource "kubectl_manifest" "rancher_egress_service" {
+  depends_on = [kubectl_manifest.tailscale_egress_proxyclass]
+  yaml_body = yamlencode({
+    apiVersion = "v1"
+    kind       = "Service"
+    metadata = {
+      name      = "rancher-agent-k3s"
+      namespace = kubernetes_namespace.cattle_system.metadata[0].name
+      annotations = {
+        "tailscale.com/proxy-class"  = "egress"
+        "tailscale.com/tags"         = "tag:k8s-${var.tailscale.suffix}"
+        "tailscale.com/tailnet-fqdn" = "rancher.${var.tailscale.domain}"
+      }
+    }
+    spec = {
+      type         = "ExternalName"
+      externalName = "placeholder"
+    }
+  })
+}

@@ -91,19 +91,23 @@ resource "kubectl_manifest" "prefect_worker_cluster_role_binding" {
   })
 }
 
-resource "kubectl_manifest" "prefect_server_egress" {
+resource "kubectl_manifest" "prefect_egress_service" {
+  depends_on = [kubectl_manifest.tailscale_egress_proxyclass]
   yaml_body = yamlencode({
     apiVersion = "v1"
     kind       = "Service"
     metadata = {
-      name = "ts-prefect"
+      name      = "worker-k3s"
+      namespace = "prefect"
       annotations = {
-        "tailscale.com/tailnet-fqdn" = var.prefect_address
+        "tailscale.com/proxy-class"  = "egress"
+        "tailscale.com/tags"         = "tag:k8s-${var.tailscale.suffix}"
+        "tailscale.com/tailnet-fqdn" = "prefect.${var.tailscale.domain}"
       }
     }
     spec = {
       type         = "ExternalName"
-      externalName = "unused"
+      externalName = "placeholder"
     }
   })
 }

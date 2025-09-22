@@ -61,27 +61,6 @@ resource "kubectl_manifest" "tailscale_egress_proxyclass" {
   })
 }
 
-resource "kubectl_manifest" "prefect_egress_service" {
-  depends_on = [kubectl_manifest.tailscale_egress_proxyclass]
-  yaml_body = yamlencode({
-    apiVersion = "v1"
-    kind       = "Service"
-    metadata = {
-      name      = "worker-k3s"
-      namespace = "prefect"
-      annotations = {
-        "tailscale.com/proxy-class"  = "egress"
-        "tailscale.com/tags"         = "tag:k8s-${var.tailscale.suffix}"
-        "tailscale.com/tailnet-fqdn" = "prefect.${var.tailscale.domain}"
-      }
-    }
-    spec = {
-      type         = "ExternalName"
-      externalName = "placeholder"
-    }
-  })
-}
-
 resource "null_resource" "get_dns_ip" {
   depends_on = [kubectl_manifest.tailscale_operator_config]
   provisioner "local-exec" {
