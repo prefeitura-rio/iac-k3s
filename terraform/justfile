@@ -1,5 +1,7 @@
 bucket := "bucket=iplanrio-dia-terraform"
 tfplan := "terraform.tfplan"
+jump_host := env("JUMP_HOST")
+target_host := env("TARGET_HOST")
 
 # Authenticate with Google Cloud and Infisical
 @auth:
@@ -16,15 +18,15 @@ tfplan := "terraform.tfplan"
 
 # Forward Incus API port from remote to local
 @incus-forward:
-    ssh -f -N -L 8443:localhost:8443 k3s@k3s.squirrel-regulus.ts.net
+    ssh -f -N -L 8443:localhost:8443 -J {{jump_host}} k3s@{{target_host}}
 
-# Forward K3s API port from remote to local (via master container)
+# Forward K3s API port from remote to local
 @k3s-forward:
-    ssh -f -N -L 6443:$(terraform output -raw k3s_master_ip):6443 k3s@k3s.squirrel-regulus.ts.net
+    ssh -f -N -L 6443:$(terraform output -raw k3s_master_ip):6443 -J {{jump_host}} k3s@{{target_host}}
 
 # Stop all port forwarding processes
 @stop-forward:
-    -pkill -f "ssh.*k3s.squirrel-regulus.ts.net"
+    -pkill -f "ssh.*{{target_host}}"
 
 # Init Terraform with backend config
 @init args="":
