@@ -24,7 +24,7 @@ resource "kubernetes_cluster_role_binding" "proxy_role_binding_kubernetes_master
   role_ref {
     api_group = "rbac.authorization.k8s.io"
     kind      = "ClusterRole"
-    name      = "proxy-clusterrole-kubeapiserver"
+    name      = kubernetes_cluster_role.proxy_clusterrole_kubeapiserver.metadata[0].name
   }
 
   subject {
@@ -90,17 +90,37 @@ resource "kubernetes_cluster_role_binding" "cattle_admin_binding" {
 
 resource "kubernetes_secret" "cattle_credentials" {
   metadata {
-    name      = "cattle-credentials-af0ea9843c"
+    name      = "cattle-credentials"
     namespace = kubernetes_namespace.cattle_system.metadata[0].name
   }
 
   type = "Opaque"
 
   data = {
-    url       = var.rancher.url
-    token     = var.rancher.token
-    namespace = ""
+    url   = var.rancher.url
+    token = var.rancher.token
   }
+}
+
+resource "kubectl_manifest" "rancher_egress_service" {
+  depends_on = [kubectl_manifest.tailscale_egress_proxyclass]
+  yaml_body = yamlencode({
+    apiVersion = "v1"
+    kind       = "Service"
+    metadata = {
+      name      = "rancher-agent-k3s"
+      namespace = kubernetes_namespace.cattle_system.metadata[0].name
+      annotations = {
+        "tailscale.com/proxy-class"  = "egress"
+        "tailscale.com/tags"         = "tag:k8s-${var.tailscale.suffix}"
+        "tailscale.com/tailnet-fqdn" = "rancher.${var.tailscale.domain}"
+      }
+    }
+    spec = {
+      type         = "ExternalName"
+      externalName = "placeholder"
+    }
+  })
 }
 
 resource "kubernetes_deployment" "cattle_cluster_agent" {
@@ -324,25 +344,4 @@ resource "kubernetes_service" "cattle_cluster_agent" {
       protocol    = "TCP"
     }
   }
-}
-
-resource "kubectl_manifest" "rancher_egress_service" {
-  depends_on = [kubectl_manifest.tailscale_egress_proxyclass]
-  yaml_body = yamlencode({
-    apiVersion = "v1"
-    kind       = "Service"
-    metadata = {
-      name      = "rancher-agent-k3s"
-      namespace = kubernetes_namespace.cattle_system.metadata[0].name
-      annotations = {
-        "tailscale.com/proxy-class"  = "egress"
-        "tailscale.com/tags"         = "tag:k8s-${var.tailscale.suffix}"
-        "tailscale.com/tailnet-fqdn" = "rancher.${var.tailscale.domain}"
-      }
-    }
-    spec = {
-      type         = "ExternalName"
-      externalName = "placeholder"
-    }
-  })
 }

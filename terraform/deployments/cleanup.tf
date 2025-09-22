@@ -20,3 +20,23 @@ resource "helm_release" "kube_cleanup_operator" {
     }
   ]
 }
+
+resource "kubernetes_cluster_role_binding_v1" "kube_cleanup_operator" {
+  metadata {
+    name = "kube-cleanup-operator"
+  }
+
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = "cleanup-operator"
+  }
+
+  subject {
+    kind      = "ServiceAccount"
+    name      = "kube-cleanup-operator"
+    namespace = "kube-system"
+  }
+
+  depends_on = [helm_release.kube_cleanup_operator]
+}
