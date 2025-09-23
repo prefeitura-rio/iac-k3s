@@ -99,17 +99,6 @@ variable "cloudsql_proxies" {
   }))
 }
 
-variable "rancher" {
-  description = "Rancher configuration"
-  sensitive   = true
-  type = object({
-    url          = string
-    token        = string
-    checksum     = string
-    install_uuid = string
-  })
-}
-
 variable "jump_host" {
   description = "Jump host for SSH connections"
   type        = string

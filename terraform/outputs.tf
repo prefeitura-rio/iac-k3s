@@ -8,3 +8,9 @@ output "kubeconfig_path" {
   value       = abspath("./kubeconfig")
   depends_on  = [null_resource.get_kubeconfig]
 }
+
+output "dashboard_admin_token" {
+  description = "Token for dashboard-admin service account"
+  value       = module.deployments.dashboard_admin_token
+  sensitive   = true
+}

@@ -1,6 +1,6 @@
 # Infrastructure as Code - K3s on Incus
 
-K3s cluster infrastructure using Terraform, Incus containers, and Ansible. Deploys Prefect, Airbyte, Infisical, Tailscale, Rancher, SigNoz, and CloudSQL Proxy on containerized Kubernetes.
+K3s cluster infrastructure using Terraform, Incus containers, and Ansible. Deploys Prefect, Airbyte, Infisical, Tailscale, SigNoz, and CloudSQL Proxy on containerized Kubernetes.
 
 ## Structure
 
@@ -29,6 +29,7 @@ nix develop  # or: direnv allow
 All Terraform commands use `infisical run` for secret injection.
 
 **Required Environment Variables:**
+
 - `JUMP_HOST`: SSH jump host for accessing the target infrastructure
 - `TARGET_HOST`: Target host where the K3s cluster will be deployed
 
@@ -93,6 +94,5 @@ Sensitive variables stored in Infisical: `incus`, `prefect_address`, `github`, `
 - **Airbyte**: Data integration
 - **Infisical**: Secret management
 - **Tailscale**: Secure networking with MagicDNS
-- **Rancher**: Kubernetes management platform
 - **SigNoz**: Application performance monitoring and observability
 - **CloudSQL Proxy**: Secure connection to Google Cloud SQL databases

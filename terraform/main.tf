@@ -137,6 +137,5 @@ module "deployments" {
   k3s_workers      = incus_instance.k3s_workers
   kubeconfig_path  = local.kubeconfig_ready
   prefect_address  = var.prefect_address
-  rancher          = var.rancher
   tailscale        = var.tailscale
 }
