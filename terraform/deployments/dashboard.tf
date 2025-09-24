@@ -108,7 +108,7 @@ resource "kubectl_manifest" "dashboard_tailscale_ingress" {
       name      = "kubernetes-dashboard"
       namespace = helm_release.kubernetes_dashboard.namespace
       annotations = {
-        "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix}"
+        "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix},tag:admin"
         "tailscale.com/hostname" = "dashboard-${var.tailscale.suffix}"
       }
     }
