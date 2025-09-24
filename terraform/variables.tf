@@ -19,7 +19,7 @@ variable "container_image" {
 variable "cpu_limit" {
   description = "CPU limit for containers"
   type        = string
-  default     = "5"
+  default     = "4"
 }
 
 variable "memory_limit" {
@@ -31,7 +31,7 @@ variable "memory_limit" {
 variable "disk_size" {
   description = "Disk size for containers"
   type        = string
-  default     = "40GB"
+  default     = "120GB"
 }
 
 variable "network_cidr" {

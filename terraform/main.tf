@@ -2,6 +2,15 @@ locals {
   kubeconfig_ready = data.local_file.kubeconfig.filename
 }
 
+resource "incus_storage_pool" "incus_pool" {
+  name   = "incus"
+  driver = "zfs"
+
+  config = {
+    source = "incus"
+  }
+}
+
 resource "incus_network" "k3s_network" {
   name = var.cluster_name
 
@@ -41,7 +50,7 @@ resource "incus_profile" "k3s_profile" {
 
     properties = {
       path = "/"
-      pool = "default"
+      pool = incus_storage_pool.incus_pool.name
       size = var.disk_size
     }
   }
