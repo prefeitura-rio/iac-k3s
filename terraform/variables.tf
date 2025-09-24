@@ -19,7 +19,7 @@ variable "container_image" {
 variable "cpu_limit" {
   description = "CPU limit for containers"
   type        = string
-  default     = "4"
+  default     = "5"
 }
 
 variable "memory_limit" {

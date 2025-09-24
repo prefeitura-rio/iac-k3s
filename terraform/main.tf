@@ -124,7 +124,11 @@ resource "null_resource" "get_kubeconfig" {
   }
 
   provisioner "local-exec" {
-    command = "if ! netstat -tlnp 2>/dev/null | grep -q ':6443.*LISTEN'; then ssh -f -N -L 6443:${incus_instance.k3s_master.ipv4_address}:6443 -J ${var.jump_host} k3s@${var.target_host}; fi"
+    command = <<-EOF
+      if ! netstat -tlnp 2>/dev/null | grep -q ':6443.*LISTEN'; then
+        ssh -f -N -L 6443:${incus_instance.k3s_master.ipv4_address}:6443 -J ${var.jump_host} k3s@${var.target_host}
+      fi
+    EOF
   }
 
   triggers = {
