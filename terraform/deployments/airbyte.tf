@@ -185,7 +185,7 @@ resource "kubectl_manifest" "airbyte_tailscale_ingress" {
       name      = "airbyte"
       namespace = helm_release.airbyte.namespace
       annotations = {
-        "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix}"
+        "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix},tag:airbyte"
         "tailscale.com/hostname" = "airbyte"
       }
     }
