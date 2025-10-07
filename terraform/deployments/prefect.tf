@@ -101,7 +101,7 @@ resource "kubectl_manifest" "prefect_egress_service" {
       namespace = "prefect"
       annotations = {
         "tailscale.com/proxy-class"  = "egress"
-        "tailscale.com/tags"         = "tag:k8s-${var.tailscale.suffix}"
+        "tailscale.com/tags"         = "tag:k8s-${var.tailscale.suffix},tag:prefect-worker"
         "tailscale.com/tailnet-fqdn" = "prefect.${var.tailscale.domain}"
       }
     }
