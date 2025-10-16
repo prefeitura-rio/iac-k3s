@@ -16,7 +16,7 @@ K3s cluster infrastructure using Terraform, Incus containers, and Ansible. Deplo
 ### Prerequisites
 
 - [Nix](https://nixos.org/download.html) (recommended) or: Terraform, Ansible, Incus, Google Cloud SDK, Infisical, just
-- SSH access to Incus host
+- SSH access to target host
 - Google Cloud Storage bucket for Terraform state
 - Infisical project for secret management
 
@@ -26,67 +26,169 @@ K3s cluster infrastructure using Terraform, Incus containers, and Ansible. Deplo
 nix develop  # or: direnv allow
 ```
 
+The project uses Nix flakes for reproducible development environments. The `.envrc` file automatically configures environment variables and enables the development shell when using direnv.
+
 All Terraform commands use `infisical run` for secret injection.
 
 **Required Environment Variables:**
 
-- `JUMP_HOST`: SSH jump host for accessing the target infrastructure
-- `TARGET_HOST`: Target host where the K3s cluster will be deployed
+**Automatically Set Environment Variables (via .envrc):**
 
-Set these in your `.env` file or export them in your shell.
+- `ANSIBLE_BECOME_PASSWORD_FILE`: Points to `./.password` for Ansible privilege escalation
+- `ANSIBLE_INVENTORY`: Points to `./inventory.ini`
+- `KUBECONFIG`: Points to `./terraform/files/kubeconfig`
+- `INCUS_TOKEN_FILE`: Points to `./incus-token.txt`
+- `INCUS_SERVER_HOST`: Set to `k3s` (Tailscale hostname)
+- `INCUS_SERVER_USER`: Set to `k3s`
+- `K3S_MASTER_HOSTNAME`: Set to `k3s-master`
+- `TF_VAR_cluster_name`: Set to `k3s`
 
 ### Deployment
 
 #### 1. Configure Host
 
 ```sh
-just ping    # test connectivity
-just deploy  # install Incus, configure permissions
+just ansible    # configure Incus host via Ansible
 ```
 
 #### 2. Deploy Cluster
 
 ```sh
-cd terraform
 just auth && just init && just plan && just apply
 ```
 
 #### 3. Access Cluster
 
 ```sh
-cd terraform
-just k3s-forward  # forward K3s API through SSH
-export KUBECONFIG=./files/kubeconfig
+export KUBECONFIG=./terraform/files/kubeconfig
 kubectl get nodes
 ```
 
-## Commands
+## Just Commands Reference
 
-### Host Management
+This project uses [just](https://github.com/casey/just) as a command runner. All commands can be run from the project root.
 
-```sh
-just ping       # test connectivity
-just deploy     # configure Incus host
-```
-
-### Infrastructure (in terraform/)
+### Prerequisites & Setup
 
 ```sh
-just auth           # authenticate services
-just init           # initialize Terraform
-just plan           # plan changes
-just apply          # deploy infrastructure
-just k3s-forward    # forward K3s API (6443)
-just incus-forward  # forward Incus API (8443)
-just stop-forward   # stop port forwarding
-just destroy        # destroy infrastructure
+just ensure-infisical-config    # ensure Infisical config exists
+just ensure-incus-token         # ensure Incus token exists (idempotent)
+just ensure-kubeconfig          # ensure Kubernetes config exists (idempotent)
 ```
+
+### Authentication
+
+```sh
+just auth                       # authenticate with Google Cloud and Infisical
+```
+
+### Host Configuration
+
+```sh
+just ansible                   # run Ansible playbook for host configuration
+```
+
+### Infrastructure Management
+
+```sh
+just init                      # initialize Terraform with backend config
+just plan                      # plan Terraform changes
+just apply                     # apply Terraform changes
+just destroy                   # destroy Terraform-managed infrastructure
+```
+
+### Token & Config Management
+
+```sh
+just token-force               # force regenerate Incus authentication token
+just kubeconfig-force          # force regenerate Kubernetes cluster configuration
+just clean                     # remove all generated files and Terraform plans
+```
+
+### Command Dependencies
+
+Commands have automatic dependency resolution:
+
+- `ensure-kubeconfig` depends on `ensure-incus-token`
+- `plan` and `apply` depend on `ensure-incus-token` and `ensure-kubeconfig`
+- `kubeconfig-force` depends on `ensure-infisical-config` and `ensure-incus-token`
+
+### Required Environment Variables
+
+The following environment variables must be set:
+
+- `INCUS_TOKEN_FILE`: Path to Incus token file (optional, defaults handled by scripts)
+- `KUBECONFIG`: Path to Kubernetes config file (optional, defaults handled by scripts)
+
+### Underlying Scripts
+
+The justfile commands use the following bash scripts located in `scripts/`:
+
+- `ensure-incus.sh`: Manages Incus authentication tokens and remote configuration
+  - Supports `--force` flag to regenerate existing tokens
+  - Automatically handles trusted machine detection and token generation
+  - Configures Incus remote named 'k3s' and switches to it
+- `ensure-kubeconfig.sh`: Fetches and configures Kubernetes cluster access
+  - Supports `--force` flag to regenerate existing kubeconfig
+  - Pulls kubeconfig from the master node via Incus
+  - Updates server hostname for external access
+- `lib/common.sh`: Shared utility functions for SSH operations, token validation, and error handling
+
+Both scripts are idempotent - they only perform actions when necessary and can be safely run multiple times.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Token generation fails**: Ensure Tailscale SSH is working and the user has Incus access on the target host
+2. **Kubeconfig fetch fails**: Verify the K3s master container is running and accessible
+3. **Terraform authentication errors**: Run `just auth` to re-authenticate with Google Cloud and Infisical
+4. **Environment variable errors**: Ensure `.env` file exists with required variables or use `direnv allow`
+
+### Force Regeneration
+
+Use the `--force` flag with scripts to regenerate existing configurations:
+
+```sh
+just token-force          # Force regenerate Incus token
+just kubeconfig-force     # Force regenerate kubeconfig
+just clean                # Remove all generated files
+```
+
+### Debugging
+
+- Check Incus connection: `incus list`
+- Verify Tailscale connectivity: `tailscale ping k3s`
+- Check Ansible connectivity: `ansible all -m ping`
+- View container logs: `incus logs <container-name>`
 
 ## Configuration
 
-Variables in `terraform/variables.tf` (defaults: 3 workers, 2 CPU, 6GB RAM, 30GB disk per container).
+### Terraform Variables
 
-Sensitive variables stored in Infisical: `incus`, `prefect_address`, `github`, `tailscale`, `infisical`.
+Variables in `terraform/variables.tf` can be customized:
+
+- `cluster_name`: K3s cluster name (default: "k3s")
+- `worker_count`: Number of worker nodes (default: 2)
+- `container_image`: Base container image (default: "images:debian/13/cloud")
+- `cpu_limit`: CPU limit per container (default: "5")
+- `memory_limit`: Memory limit per container (default: "20GB")
+
+### Sensitive Variables
+
+Stored in Infisical and accessed via `infisical run`:
+
+- `incus`: Incus server configuration
+- `prefect_address`: Prefect server address
+- `github`: GitHub integration tokens
+- `tailscale`: Tailscale authentication key
+- `infisical`: Infisical project credentials
+
+### Ansible Configuration
+
+- `inventory.ini`: Defines target hosts
+- `playbook.yaml`: Host configuration tasks
+- `.password`: Ansible become password (not tracked in git)
 
 ## Applications
 
