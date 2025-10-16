@@ -67,9 +67,10 @@ variable "tailscale" {
   description = "Tailscale configuration"
   sensitive   = true
   type = object({
-    tailnet = string
+    authkey = string
     domain  = string
     suffix  = string
+    tailnet = string
     oauth = object({
       client_id     = string
       client_secret = string
@@ -97,14 +98,4 @@ variable "cloudsql_proxies" {
     port            = string
     private         = optional(bool, false)
   }))
-}
-
-variable "jump_host" {
-  description = "Jump host for SSH connections"
-  type        = string
-}
-
-variable "target_host" {
-  description = "Target host for SSH connections"
-  type        = string
 }

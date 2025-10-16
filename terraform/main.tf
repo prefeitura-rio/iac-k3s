@@ -17,7 +17,10 @@ resource "incus_network" "k3s_network" {
   config = {
     "ipv4.address" = var.network_cidr
     "ipv4.nat"     = "true"
+    "ipv4.dhcp"    = "true"
+    "ipv4.routing" = "true"
     "ipv6.address" = "none"
+    "dns.domain"   = "incus"
   }
 }
 
@@ -81,7 +84,9 @@ resource "incus_instance" "k3s_master" {
 
   config = {
     "cloud-init.user-data" = templatefile("./files/cloud-init-master.yaml", {
-      k3s_token = random_password.k3s_token.result
+      k3s_token         = random_password.k3s_token.result
+      tailscale_authkey = var.tailscale.authkey
+      cluster_name      = var.cluster_name
     })
   }
 }
@@ -96,8 +101,9 @@ resource "incus_instance" "k3s_workers" {
 
   config = {
     "cloud-init.user-data" = templatefile("./files/cloud-init-worker.yaml", {
-      k3s_token = random_password.k3s_token.result
-      master_ip = try(incus_instance.k3s_master.ipv4_address, "")
+      k3s_token         = random_password.k3s_token.result
+      cluster_name      = var.cluster_name
+      tailscale_authkey = var.tailscale.authkey
     })
   }
 }
@@ -125,9 +131,7 @@ resource "null_resource" "get_kubeconfig" {
 
   provisioner "local-exec" {
     command = <<-EOF
-      if ! netstat -tlnp 2>/dev/null | grep -q ':6443.*LISTEN'; then
-        ssh -f -N -L 6443:${incus_instance.k3s_master.ipv4_address}:6443 -J ${var.jump_host} k3s@${var.target_host}
-      fi
+      sed -i 's|server: https://127.0.0.1:6443|server: https://${var.cluster_name}-master:6443|g' ./files/kubeconfig
     EOF
   }
 

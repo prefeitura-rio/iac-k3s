@@ -1,14 +1,19 @@
 locals {
-  nameserver_ip = trimspace(data.local_file.nameserver_ip.content)
+  nameserver_ip = try(data.kubernetes_resource.tailscale_dnsconfig.object.status.nameserver.ip, "100.100.100.100")
+}
+
+resource "kubernetes_namespace" "tailscale" {
+  metadata {
+    name = "tailscale"
+  }
 }
 
 resource "helm_release" "tailscale_operator" {
-  name             = "tailscale-operator"
-  repository       = "https://pkgs.tailscale.com/helmcharts"
-  chart            = "tailscale-operator"
-  version          = "1.88.3"
-  namespace        = "tailscale"
-  create_namespace = true
+  name       = "tailscale-operator"
+  repository = "https://pkgs.tailscale.com/helmcharts"
+  chart      = "tailscale-operator"
+  version    = "1.88.4"
+  namespace  = kubernetes_namespace.tailscale.metadata[0].name
 
   set = [
     {
@@ -26,8 +31,10 @@ resource "helm_release" "tailscale_operator" {
   ]
 }
 
-resource "kubectl_manifest" "tailscale_operator_config" {
-  depends_on = [helm_release.tailscale_operator]
+resource "kubectl_manifest" "tailscale_dnsconfig" {
+  depends_on        = [helm_release.tailscale_operator]
+  force_conflicts   = true
+  server_side_apply = true
   yaml_body = yamlencode({
     apiVersion = "tailscale.com/v1alpha1"
     kind       = "DNSConfig"
@@ -61,37 +68,22 @@ resource "kubectl_manifest" "tailscale_egress_proxyclass" {
   })
 }
 
-resource "null_resource" "get_dns_ip" {
-  depends_on = [kubectl_manifest.tailscale_operator_config]
-  provisioner "local-exec" {
-    command = <<-EOF
-      kubectl wait --for=condition=NameserverReady dnsconfig/ts-dns --timeout=300s || true
-
-      for i in {1..30}; do
-        IP=$(kubectl get dnsconfig ts-dns -o jsonpath='{.status.nameserver.ip}' 2>/dev/null || echo "")
-
-        if [ -n "$IP" ] && [ "$IP" != "" ]; then
-          echo "$IP" > ./files/nameserver_ip.txt
-          exit 0
-        fi
-
-        echo "Waiting for nameserver IP... attempt $i/30"
-        sleep 10
-      done
-
-      echo "Failed to get nameserver IP from Tailscale DNSConfig"
-      echo "Using fallback IP"
-      echo "100.100.100.100" > ./files/nameserver_ip.txt
-    EOF
-  }
+resource "time_sleep" "wait_for_dnsconfig" {
+  depends_on      = [kubectl_manifest.tailscale_dnsconfig]
+  create_duration = "60s"
 }
 
-data "local_file" "nameserver_ip" {
-  filename   = "./files/nameserver_ip.txt"
-  depends_on = [null_resource.get_dns_ip]
+data "kubernetes_resource" "tailscale_dnsconfig" {
+  api_version = "tailscale.com/v1alpha1"
+  kind        = "DNSConfig"
+  metadata {
+    name = "ts-dns"
+  }
+  depends_on = [time_sleep.wait_for_dnsconfig]
 }
 
 resource "kubectl_manifest" "coredns_config" {
+  depends_on = [data.kubernetes_resource.tailscale_dnsconfig]
   yaml_body = yamlencode({
     apiVersion = "v1"
     kind       = "ConfigMap"
