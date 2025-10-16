@@ -1,9 +1,14 @@
 ---
-- name: K3S deploy
-  hosts: all
+- name: K3S Infrastructure Setup
+  hosts: server
   become: true
 
   tasks:
+    - name: Update package cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
     - name: Install required packages for Incus
       ansible.builtin.apt:
         update_cache: true
@@ -51,20 +56,21 @@
         state: started
         enabled: yes
 
-    - name: Configure Incus to listen on network interface
-      ansible.builtin.shell: |
-        incus config set core.https_address '[::]:8443'
-      become_user: "{{ ansible_user }}"
+    - name: Wait for Incus to be ready
+      ansible.builtin.wait_for:
+        port: 8443
+        host: localhost
+        delay: 5
+        timeout: 30
 
-    - name: Generate trust token for client
-      ansible.builtin.shell: incus config trust add local-client
+    - name: Check if Incus is initialized
+      ansible.builtin.shell: incus info
       become_user: "{{ ansible_user }}"
-      register: trust_token
-      no_log: true
+      register: incus_status
+      failed_when: false
 
-    - name: Display trust token
-      ansible.builtin.debug:
-        msg: "Trust token: {{ trust_token.stdout_lines[-1] }}"
-        verbosity: 0
-      vars:
-        ansible_no_log: false
+    - name: Initialize Incus if needed
+      ansible.builtin.shell: incus admin init --auto
+      become_user: "{{ ansible_user }}"
+      when: incus_status.rc != 0
+
