@@ -1,5 +1,5 @@
 locals {
-  kubeconfig_ready = data.local_file.kubeconfig.filename
+  kubeconfig_path = "./files/kubeconfig"
 }
 
 resource "incus_storage_pool" "incus_pool" {
@@ -91,13 +91,18 @@ resource "incus_instance" "k3s_master" {
   }
 }
 
+resource "time_sleep" "wait_for_master_ip" {
+  depends_on      = [incus_instance.k3s_master]
+  create_duration = "10s"
+}
+
 resource "incus_instance" "k3s_workers" {
   count      = var.worker_count
   name       = "${var.cluster_name}-worker-${count.index + 1}"
   image      = var.container_image
   type       = "container"
   profiles   = [incus_profile.k3s_profile.name]
-  depends_on = [incus_instance.k3s_master]
+  depends_on = [time_sleep.wait_for_master_ip]
 
   config = {
     "cloud-init.user-data" = templatefile("./files/cloud-init-worker.yaml", {
@@ -113,46 +118,16 @@ resource "random_password" "k3s_token" {
   special = false
 }
 
-resource "null_resource" "get_kubeconfig" {
-  depends_on = [incus_instance.k3s_workers]
-
-  provisioner "local-exec" {
-    command = <<-EOF
-      until incus exec ${incus_instance.k3s_master.name} -- k3s kubectl get nodes; do
-        echo "Waiting for K3s API to be ready..."
-        sleep 10
-      done
-    EOF
-  }
-
-  provisioner "local-exec" {
-    command = "incus file pull ${incus_instance.k3s_master.name}/etc/rancher/k3s/k3s.yaml ./files/kubeconfig"
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOF
-      sed -i 's|server: https://127.0.0.1:6443|server: https://${var.cluster_name}-master:6443|g' ./files/kubeconfig
-    EOF
-  }
-
-  triggers = {
-    master_ip = incus_instance.k3s_master.ipv4_address
-  }
-}
-
-data "local_file" "kubeconfig" {
-  filename   = "./files/kubeconfig"
-  depends_on = [null_resource.get_kubeconfig]
-}
-
 module "deployments" {
+  count            = fileexists(local.kubeconfig_path) ? 1 : 0
+  depends_on       = [incus_instance.k3s_workers]
   source           = "./deployments"
   cloudsql_proxies = var.cloudsql_proxies
   github           = var.github
   infisical        = var.infisical
   k3s_master       = incus_instance.k3s_master
   k3s_workers      = incus_instance.k3s_workers
-  kubeconfig_path  = local.kubeconfig_ready
+  kubeconfig_path  = local.kubeconfig_path
   prefect_address  = var.prefect_address
   tailscale        = var.tailscale
 }

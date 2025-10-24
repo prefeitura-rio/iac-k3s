@@ -4,9 +4,22 @@ provider "incus" {
 
   remote {
     name    = "k3s"
-    scheme  = "https"
     address = var.incus.host
     token   = var.incus.token
   }
+}
+
+provider "kubernetes" {
+  config_path = fileexists(local.kubeconfig_path) ? local.kubeconfig_path : null
+}
+
+provider "helm" {
+  kubernetes = {
+    config_path = fileexists(local.kubeconfig_path) ? local.kubeconfig_path : null
+  }
+}
+
+provider "kubectl" {
+  config_path = fileexists(local.kubeconfig_path) ? local.kubeconfig_path : null
 }
 

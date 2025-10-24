@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
+source "$PWD/scripts/lib/logging.sh"
+
 get_machine_id() {
     if [[ -f /etc/machine-id && -s /etc/machine-id ]]; then
         cat /etc/machine-id
     elif [[ -f /var/lib/dbus/machine-id && -s /var/lib/dbus/machine-id ]]; then
         cat /var/lib/dbus/machine-id
     else
-        echo "[WARNING] No machine-id found, using hostname as fallback" >&2
+        log_warning "No machine-id found, using hostname as fallback"
         hostname
     fi
 }
@@ -46,21 +48,21 @@ retry_ssh_command() {
         fi
 
         if echo "$ssh_output" | grep -qi "tailscale ssh requires an additional check\|visit.*login\.tailscale\.com\|authenticate.*tailscale"; then
-            echo "[ERROR] Tailscale SSH authentication required!" >&2
-            echo "[ERROR] Please authenticate by running: tailscale login" >&2
-            echo "[ERROR] Or visit the authentication URL shown above" >&2
+            log_error "Tailscale SSH authentication required!"
+            log_error "Please authenticate by running: tailscale login"
+            log_error "Or visit the authentication URL shown above"
             return 1
         fi
 
         if [[ $attempt -lt $max_attempts ]]; then
-            echo "[WARNING] SSH command attempt $attempt failed, retrying in 2 seconds..." >&2
+            log_warning "SSH command attempt $attempt failed, retrying in 2 seconds..."
             sleep 2
         fi
 
         ((attempt++))
     done
 
-    echo "[ERROR] SSH failed after $max_attempts attempts to $server_host" >&2
+    log_error "SSH failed after $max_attempts attempts to $server_host"
     return 1
 }
 
@@ -75,14 +77,14 @@ retry_incus_command() {
         fi
 
         if [[ $attempt -lt $max_attempts ]]; then
-            echo "[WARNING] Incus command attempt $attempt failed, retrying in 2 seconds..." >&2
+            log_warning "Incus command attempt $attempt failed, retrying in 2 seconds..."
             sleep 2
         fi
 
         ((attempt++))
     done
 
-    echo "[ERROR] Incus command failed after $max_attempts attempts: $incus_command" >&2
+    log_error "Incus command failed after $max_attempts attempts: $incus_command"
     return 1
 }
 
@@ -110,26 +112,26 @@ check_file_exists() {
 }
 
 print_env_missing_error() {
-    echo "[ERROR] Make sure environment variables are loaded from .envrc (run 'direnv allow')" >&2
+    log_error "Make sure environment variables are loaded from .envrc (run 'direnv allow')"
 }
 
 validate_incus_environment() {
     local errors=0
 
     if [[ -z "${INCUS_TOKEN_FILE:-}" ]]; then
-        echo "[ERROR] INCUS_TOKEN_FILE environment variable not set" >&2
+        log_error "INCUS_TOKEN_FILE environment variable not set"
         print_env_missing_error
         errors=1
     fi
 
     if [[ -z "${INCUS_SERVER_HOST:-}" ]]; then
-        echo "[ERROR] INCUS_SERVER_HOST environment variable not set" >&2
+        log_error "INCUS_SERVER_HOST environment variable not set"
         print_env_missing_error
         errors=1
     fi
 
     if [[ -z "${INCUS_SERVER_USER:-}" ]]; then
-        echo "[ERROR] INCUS_SERVER_USER environment variable not set" >&2
+        log_error "INCUS_SERVER_USER environment variable not set"
         print_env_missing_error
         errors=1
     fi

@@ -25,10 +25,11 @@
           buildInputs = with pkgs; [
             ansible
             incus
-            infisical
             just
+            kubectl
+            kubernetes-helm
+            nodejs_latest
             terraform
-            uv
           ];
         };
       }

@@ -29,11 +29,15 @@ terraform {
     }
     incus = {
       source  = "lxc/incus"
-      version = ">= 0.5.0"
+      version = ">= 1.0.0"
     }
     local = {
       source  = "hashicorp/local"
       version = ">= 2.5.3"
+    }
+    time = {
+      source  = "hashicorp/time"
+      version = ">= 0.12.1"
     }
   }
 }
