@@ -24,12 +24,13 @@
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             ansible
-            incus
             just
             kubectl
             kubernetes-helm
             nodejs_latest
             terraform
+          ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
+            incus
           ];
         };
       }
