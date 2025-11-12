@@ -7,19 +7,11 @@ resource "helm_release" "airbyte" {
   create_namespace = true
   timeout          = 3600
 
-  set = [
-    {
-      name  = "global.airbyteUrl"
-      value = "airbyte.${var.tailscale.domain}"
-    },
-    {
-      name  = "global.edition"
-      value = "community"
-    },
-    {
-      name  = "global.auth.enabled"
-      value = "false"
-    },
+  values = [
+    templatefile("${path.module}/yamls/airbyte-values.yaml", {
+      airbyte_url = "airbyte.${var.tailscale.domain}"
+      edition     = "community"
+    })
   ]
 }
 

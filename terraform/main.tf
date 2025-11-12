@@ -1,5 +1,6 @@
 locals {
   kubeconfig_path = "./files/kubeconfig"
+  incus_token     = fileexists("${path.root}/../incus-token.txt") ? file("${path.root}/../incus-token.txt") : ""
 }
 
 resource "incus_storage_pool" "incus_pool" {
@@ -127,7 +128,6 @@ module "deployments" {
   infisical        = var.infisical
   k3s_master       = incus_instance.k3s_master
   k3s_workers      = incus_instance.k3s_workers
-  kubeconfig_path  = local.kubeconfig_path
   prefect_address  = var.prefect_address
   tailscale        = var.tailscale
 }

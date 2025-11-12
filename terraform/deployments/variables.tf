@@ -1,8 +1,3 @@
-variable "kubeconfig_path" {
-  description = "Path to the kubeconfig file"
-  type        = string
-}
-
 variable "k3s_master" {
   description = "K3s master instance"
   type = object({

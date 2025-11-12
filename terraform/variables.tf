@@ -45,14 +45,6 @@ variable "prefect_address" {
   type        = string
 }
 
-variable "incus" {
-  description = "The Incus remote configuration"
-  type = object({
-    host  = string
-    token = string
-  })
-}
-
 variable "github" {
   description = "GitHub credentials for accessing private container registry"
   sensitive   = true

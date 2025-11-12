@@ -4,8 +4,8 @@ provider "incus" {
 
   remote {
     name    = "k3s"
-    address = var.incus.host
-    token   = var.incus.token
+    address = "https://${var.cluster_name}:8443"
+    token   = local.incus_token
   }
 }
 
