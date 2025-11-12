@@ -2,7 +2,6 @@ resource "helm_release" "kube_cleanup_operator" {
   name             = "kube-cleanup-operator"
   repository       = "http://charts.lwolf.org"
   chart            = "kube-cleanup-operator"
-  version          = "1.0.4"
   namespace        = "kube-system"
   create_namespace = false
 

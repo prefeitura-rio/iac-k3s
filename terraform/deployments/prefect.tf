@@ -31,7 +31,6 @@ resource "helm_release" "prefect_worker" {
   name       = "prefect-worker"
   repository = "https://prefecthq.github.io/prefect-helm"
   chart      = "prefect-worker"
-  version    = "2025.9.5190948"
   namespace  = kubernetes_namespace.prefect.metadata[0].name
   values = [templatefile("${path.module}/yamls/prefect-worker-values.yaml", {
     prefect_server_url       = "${var.prefect_address}/api"

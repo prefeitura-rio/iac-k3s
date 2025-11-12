@@ -3,7 +3,6 @@ resource "helm_release" "kubernetes_dashboard" {
   repository = "https://kubernetes.github.io/dashboard/"
   chart      = "kubernetes-dashboard"
   namespace  = "kubernetes-dashboard"
-  version    = "7.10.0"
 
   create_namespace = true
 

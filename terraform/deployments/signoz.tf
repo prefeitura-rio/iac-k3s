@@ -2,7 +2,6 @@ resource "helm_release" "signoz" {
   name             = "signoz"
   repository       = "https://charts.signoz.io"
   chart            = "signoz"
-  version          = "0.91.1"
   namespace        = "signoz"
   create_namespace = true
   timeout          = 3600
