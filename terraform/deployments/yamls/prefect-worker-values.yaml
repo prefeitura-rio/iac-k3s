@@ -8,6 +8,8 @@ worker:
 
   config:
     workPool: ${prefect_work_pool}
+    limit: 8
+    prefetchSeconds: 30
     baseJobTemplate:
       configuration: |
         {
