@@ -9,8 +9,9 @@ resource "helm_release" "airbyte" {
 
   values = [
     templatefile("${path.module}/yamls/airbyte-values.yaml", {
-      airbyte_url = "airbyte.${var.tailscale.domain}"
-      edition     = "community"
+      airbyte_url    = "airbyte.${var.tailscale.domain}"
+      edition        = "community"
+      airbyte_worker = "k3s-worker-2"
     })
   ]
 }

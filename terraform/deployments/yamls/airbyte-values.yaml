@@ -4,88 +4,32 @@ global:
   auth:
     enabled: false
 
-  jobs:
-    resources:
-      requests:
-        memory: "512Mi"
-        cpu: "200m"
-      limits:
-        memory: "2Gi"
-        cpu: "1000m"
-
-  workloads:
-    resources:
-      useConnectorResourceDefaults: false
-
-      mainContainer:
-        cpu:
-          request: "200m"
-          limit: "1500m"
-        memory:
-          request: "512Mi"
-          limit: "2Gi"
-
-      check:
-        cpu:
-          request: "100m"
-          limit: "500m"
-        memory:
-          request: "256Mi"
-          limit: "1Gi"
-
-      discover:
-        cpu:
-          request: "100m"
-          limit: "500m"
-        memory:
-          request: "256Mi"
-          limit: "1Gi"
-
-      replication:
-        cpu:
-          request: "300m"
-          limit: "2000m"
-        memory:
-          request: "1Gi"
-          limit: "4Gi"
-
-      sidecar:
-        cpu:
-          request: "150m"
-          limit: "500m"
-        memory:
-          request: "256Mi"
-          limit: "1Gi"
-
-worker:
-  replicaCount: 1
-  resources:
-    requests:
-      cpu: 1000m
-      memory: 4Gi
-    limits:
-      cpu: 3000m
-      memory: 8Gi
-
-  autoscaling:
-    enabled: true
-    minReplicas: 1
-    maxReplicas: 2
-    targetCPUUtilizationPercentage: 70
-    targetMemoryUtilizationPercentage: 80
-
 server:
-  replicaCount: 1
+  nodeSelector:
+    kubernetes.io/hostname: ${airbyte_worker}
+  tolerations:
+    - key: "airbyte"
+      operator: "Equal"
+      value: "dedicated"
+      effect: "NoSchedule"
+
   resources:
     requests:
-      cpu: 500m
-      memory: 2Gi
+      cpu: "500m"
+      memory: "2Gi"
     limits:
-      cpu: 2000m
-      memory: 4Gi
+      cpu: "1000m"
+      memory: "4Gi"
 
 temporal:
-  replicaCount: 1
+  nodeSelector:
+    kubernetes.io/hostname: ${airbyte_worker}
+  tolerations:
+    - key: "airbyte"
+      operator: "Equal"
+      value: "dedicated"
+      effect: "NoSchedule"
+
   resources:
     requests:
       cpu: 300m
@@ -94,32 +38,31 @@ temporal:
       cpu: 1000m
       memory: 2Gi
 
-minio:
+workloadLauncher:
+  nodeSelector:
+    kubernetes.io/hostname: ${airbyte_worker}
+  tolerations:
+    - key: "airbyte"
+      operator: "Equal"
+      value: "dedicated"
+      effect: "NoSchedule"
+
   resources:
     requests:
-      cpu: 200m
-      memory: 1Gi
-    limits:
       cpu: 500m
       memory: 2Gi
-
-workloadLauncher:
-  replicaCount: 1
-  resources:
-    requests:
-      cpu: 200m
-      memory: 1Gi
     limits:
-      cpu: 1000m
-      memory: 2Gi
-
-  autoscaling:
-    enabled: true
-    minReplicas: 1
-    maxReplicas: 2
-    targetCPUUtilizationPercentage: 80
+      cpu: 2000m
+      memory: 4Gi
 
 podSweeper:
+  nodeSelector:
+    kubernetes.io/hostname: ${airbyte_worker}
+  tolerations:
+    - key: "airbyte"
+      operator: "Equal"
+      value: "dedicated"
+      effect: "NoSchedule"
   resources:
     requests:
       cpu: 50m
@@ -129,6 +72,13 @@ podSweeper:
       memory: 256Mi
 
 metrics:
+  nodeSelector:
+    kubernetes.io/hostname: ${airbyte_worker}
+  tolerations:
+    - key: "airbyte"
+      operator: "Equal"
+      value: "dedicated"
+      effect: "NoSchedule"
   resources:
     requests:
       cpu: 50m
@@ -138,14 +88,52 @@ metrics:
       memory: 512Mi
 
 cron:
+  nodeSelector:
+    kubernetes.io/hostname: ${airbyte_worker}
+  tolerations:
+    - key: "airbyte"
+      operator: "Equal"
+      value: "dedicated"
+      effect: "NoSchedule"
   resources:
     requests:
       cpu: 50m
       memory: 128Mi
     limits:
-      cpu: 300m
-      memory: 900Mi
+      cpu: 800m
+      memory: 1Gi
 
-jobs:
-  kube:
-    ttl_seconds_after_finished: 3600
+workloadApiServer:
+  nodeSelector:
+    kubernetes.io/hostname: ${airbyte_worker}
+  tolerations:
+    - key: "airbyte"
+      operator: "Equal"
+      value: "dedicated"
+      effect: "NoSchedule"
+
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+airbyteBootloader:
+  nodeSelector:
+    kubernetes.io/hostname: ${airbyte_worker}
+  tolerations:
+    - key: "airbyte"
+      operator: "Equal"
+      value: "dedicated"
+      effect: "NoSchedule"
+
+connectorBuilderServer:
+  nodeSelector:
+    kubernetes.io/hostname: ${airbyte_worker}
+  tolerations:
+    - key: "airbyte"
+      operator: "Equal"
+      value: "dedicated"
+      effect: "NoSchedule"
