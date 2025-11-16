@@ -7,12 +7,6 @@ global:
 server:
   nodeSelector:
     kubernetes.io/hostname: ${airbyte_worker}
-  tolerations:
-    - key: "airbyte"
-      operator: "Equal"
-      value: "dedicated"
-      effect: "NoSchedule"
-
   resources:
     requests:
       cpu: "500m"
@@ -24,12 +18,6 @@ server:
 temporal:
   nodeSelector:
     kubernetes.io/hostname: ${airbyte_worker}
-  tolerations:
-    - key: "airbyte"
-      operator: "Equal"
-      value: "dedicated"
-      effect: "NoSchedule"
-
   resources:
     requests:
       cpu: 300m
@@ -41,12 +29,6 @@ temporal:
 workloadLauncher:
   nodeSelector:
     kubernetes.io/hostname: ${airbyte_worker}
-  tolerations:
-    - key: "airbyte"
-      operator: "Equal"
-      value: "dedicated"
-      effect: "NoSchedule"
-
   resources:
     requests:
       cpu: 500m
@@ -58,11 +40,6 @@ workloadLauncher:
 podSweeper:
   nodeSelector:
     kubernetes.io/hostname: ${airbyte_worker}
-  tolerations:
-    - key: "airbyte"
-      operator: "Equal"
-      value: "dedicated"
-      effect: "NoSchedule"
   resources:
     requests:
       cpu: 50m
@@ -74,11 +51,6 @@ podSweeper:
 metrics:
   nodeSelector:
     kubernetes.io/hostname: ${airbyte_worker}
-  tolerations:
-    - key: "airbyte"
-      operator: "Equal"
-      value: "dedicated"
-      effect: "NoSchedule"
   resources:
     requests:
       cpu: 50m
@@ -90,11 +62,6 @@ metrics:
 cron:
   nodeSelector:
     kubernetes.io/hostname: ${airbyte_worker}
-  tolerations:
-    - key: "airbyte"
-      operator: "Equal"
-      value: "dedicated"
-      effect: "NoSchedule"
   resources:
     requests:
       cpu: 50m
@@ -106,12 +73,6 @@ cron:
 workloadApiServer:
   nodeSelector:
     kubernetes.io/hostname: ${airbyte_worker}
-  tolerations:
-    - key: "airbyte"
-      operator: "Equal"
-      value: "dedicated"
-      effect: "NoSchedule"
-
   resources:
     requests:
       cpu: "300m"
@@ -123,17 +84,7 @@ workloadApiServer:
 airbyteBootloader:
   nodeSelector:
     kubernetes.io/hostname: ${airbyte_worker}
-  tolerations:
-    - key: "airbyte"
-      operator: "Equal"
-      value: "dedicated"
-      effect: "NoSchedule"
 
 connectorBuilderServer:
   nodeSelector:
     kubernetes.io/hostname: ${airbyte_worker}
-  tolerations:
-    - key: "airbyte"
-      operator: "Equal"
-      value: "dedicated"
-      effect: "NoSchedule"
