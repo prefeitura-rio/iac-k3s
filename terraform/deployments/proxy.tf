@@ -16,6 +16,11 @@ resource "kubernetes_config_map" "squid_config" {
 
       # access control - allow all
       acl all src 0.0.0.0/0
+
+      # allow CONNECT method for SMTP tunneling
+      acl CONNECT method CONNECT
+      acl smtp_ports port 25 465 587
+      http_access allow CONNECT smtp_ports
       http_access allow all
 
       # disable caching
