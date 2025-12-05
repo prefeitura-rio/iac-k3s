@@ -1,13 +1,13 @@
-resource "kubernetes_namespace" "proxy" {
+resource "kubernetes_namespace_v1" "proxy" {
   metadata {
     name = "proxy"
   }
 }
 
-resource "kubernetes_config_map" "squid_config" {
+resource "kubernetes_config_map_v1" "squid_config" {
   metadata {
     name      = "squid-config"
-    namespace = kubernetes_namespace.proxy.metadata[0].name
+    namespace = kubernetes_namespace_v1.proxy.metadata[0].name
   }
 
   data = {
@@ -43,10 +43,10 @@ resource "kubernetes_config_map" "squid_config" {
   }
 }
 
-resource "kubernetes_deployment" "squid" {
+resource "kubernetes_deployment_v1" "squid" {
   metadata {
     name      = "squid"
-    namespace = kubernetes_namespace.proxy.metadata[0].name
+    namespace = kubernetes_namespace_v1.proxy.metadata[0].name
     labels = {
       app = "squid"
     }
@@ -117,7 +117,7 @@ resource "kubernetes_deployment" "squid" {
         volume {
           name = "config"
           config_map {
-            name = kubernetes_config_map.squid_config.metadata[0].name
+            name = kubernetes_config_map_v1.squid_config.metadata[0].name
           }
         }
       }
@@ -125,10 +125,10 @@ resource "kubernetes_deployment" "squid" {
   }
 }
 
-resource "kubernetes_service" "squid" {
+resource "kubernetes_service_v1" "squid" {
   metadata {
     name      = "proxy"
-    namespace = kubernetes_namespace.proxy.metadata[0].name
+    namespace = kubernetes_namespace_v1.proxy.metadata[0].name
     labels = {
       app = "squid"
     }

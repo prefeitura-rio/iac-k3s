@@ -10,7 +10,7 @@ resource "helm_release" "infisical_secrets_operator" {
   create_namespace = true
 }
 
-resource "kubernetes_config_map" "infisical_operator_global_settings" {
+resource "kubernetes_config_map_v1" "infisical_operator_global_settings" {
   metadata {
     name      = "infisical-config"
     namespace = helm_release.infisical_secrets_operator.namespace

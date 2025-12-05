@@ -2,7 +2,7 @@ locals {
   nameserver_ip = try(data.kubernetes_resource.tailscale_dnsconfig.object.status.nameserver.ip, "100.100.100.100")
 }
 
-resource "kubernetes_namespace" "tailscale" {
+resource "kubernetes_namespace_v1" "tailscale" {
   metadata {
     name = "tailscale"
   }
@@ -13,7 +13,7 @@ resource "helm_release" "tailscale_operator" {
   repository = "https://pkgs.tailscale.com/helmcharts"
   chart      = "tailscale-operator"
   version    = "1.90.8"
-  namespace  = kubernetes_namespace.tailscale.metadata[0].name
+  namespace  = kubernetes_namespace_v1.tailscale.metadata[0].name
 
   set = [
     {

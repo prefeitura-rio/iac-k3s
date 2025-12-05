@@ -1,13 +1,13 @@
-resource "kubernetes_namespace" "prefect" {
+resource "kubernetes_namespace_v1" "prefect" {
   metadata {
     name = "prefect"
   }
 }
 
-resource "kubernetes_secret" "gh_registry_config" {
+resource "kubernetes_secret_v1" "gh_registry_config" {
   metadata {
     name      = "gh-registry-config"
-    namespace = kubernetes_namespace.prefect.metadata[0].name
+    namespace = kubernetes_namespace_v1.prefect.metadata[0].name
   }
 
   type = "kubernetes.io/dockerconfigjson"
@@ -27,17 +27,17 @@ resource "kubernetes_secret" "gh_registry_config" {
 }
 
 resource "helm_release" "prefect_worker" {
-  depends_on = [kubernetes_namespace.prefect]
+  depends_on = [kubernetes_namespace_v1.prefect]
   name       = "prefect-worker"
   repository = "https://prefecthq.github.io/prefect-helm"
   chart      = "prefect-worker"
-  namespace  = kubernetes_namespace.prefect.metadata[0].name
+  namespace  = kubernetes_namespace_v1.prefect.metadata[0].name
   values = [templatefile("${path.module}/yamls/prefect-worker-values.yaml", {
     prefect_server_url       = "${var.prefect_address}/api"
     prefect_work_pool        = "k3s-pool"
-    image_pull_secret_name   = kubernetes_secret.gh_registry_config.metadata[0].name
+    image_pull_secret_name   = kubernetes_secret_v1.gh_registry_config.metadata[0].name
     envs_secret_name         = "prefect-jobs-secrets-staging"
-    prefect_worker_namespace = kubernetes_namespace.prefect.metadata[0].name
+    prefect_worker_namespace = kubernetes_namespace_v1.prefect.metadata[0].name
   })]
 }
 
@@ -112,24 +112,24 @@ resource "kubectl_manifest" "prefect_egress_service" {
 }
 
 resource "kubectl_manifest" "infisical_secret_prefect_jobs" {
-  depends_on = [helm_release.infisical_secrets_operator, kubernetes_namespace.prefect]
+  depends_on = [helm_release.infisical_secrets_operator, kubernetes_namespace_v1.prefect]
   yaml_body = templatefile("${path.module}/yamls/infisical-secret.yaml", {
     secret_name           = "prefect-jobs-secrets"
     project_slug          = "prefect-jobs-v-l3-v"
     env_slug              = "prod"
-    namespace             = kubernetes_namespace.prefect.metadata[0].name
+    namespace             = kubernetes_namespace_v1.prefect.metadata[0].name
     auth_secret_name      = local.infisical_auth_secret_name
     auth_secret_namespace = helm_release.infisical_secrets_operator.namespace
   })
 }
 
 resource "kubectl_manifest" "infisical_secret_prefect_jobs_staging" {
-  depends_on = [helm_release.infisical_secrets_operator, kubernetes_namespace.prefect]
+  depends_on = [helm_release.infisical_secrets_operator, kubernetes_namespace_v1.prefect]
   yaml_body = templatefile("${path.module}/yamls/infisical-secret.yaml", {
     secret_name           = "prefect-jobs-secrets-staging"
     project_slug          = "prefect-jobs-v-l3-v"
     env_slug              = "staging"
-    namespace             = kubernetes_namespace.prefect.metadata[0].name
+    namespace             = kubernetes_namespace_v1.prefect.metadata[0].name
     auth_secret_name      = local.infisical_auth_secret_name
     auth_secret_namespace = helm_release.infisical_secrets_operator.namespace
   })

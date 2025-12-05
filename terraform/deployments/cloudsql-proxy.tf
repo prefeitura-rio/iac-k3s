@@ -1,15 +1,15 @@
-resource "kubernetes_namespace" "cloudsql_proxy" {
+resource "kubernetes_namespace_v1" "cloudsql_proxy" {
   metadata {
     name = "cloudsql-proxy"
   }
 }
 
-resource "kubernetes_config_map" "cloudsql_proxy" {
+resource "kubernetes_config_map_v1" "cloudsql_proxy" {
   for_each = var.cloudsql_proxies
 
   metadata {
     name      = "${each.key}-config"
-    namespace = kubernetes_namespace.cloudsql_proxy.metadata[0].name
+    namespace = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
   }
   data = {
     CLOUD_SQL_INSTANCE_NAME   = each.value.instance_name
@@ -18,19 +18,19 @@ resource "kubernetes_config_map" "cloudsql_proxy" {
   }
 }
 
-resource "kubernetes_secret" "cloudsql_proxy" {
+resource "kubernetes_secret_v1" "cloudsql_proxy" {
   for_each = var.cloudsql_proxies
 
   metadata {
     name      = "${each.key}-sa-key"
-    namespace = kubernetes_namespace.cloudsql_proxy.metadata[0].name
+    namespace = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
   }
   data = {
     "service-account-key.json" = base64decode(each.value.sa_key)
   }
 }
 
-resource "kubernetes_deployment" "cloudsql_proxy" {
+resource "kubernetes_deployment_v1" "cloudsql_proxy" {
   for_each = var.cloudsql_proxies
 
   metadata {
@@ -38,7 +38,7 @@ resource "kubernetes_deployment" "cloudsql_proxy" {
       app = each.key
     }
     name      = each.key
-    namespace = kubernetes_namespace.cloudsql_proxy.metadata[0].name
+    namespace = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
   }
 
   spec {
@@ -64,7 +64,7 @@ resource "kubernetes_deployment" "cloudsql_proxy" {
           }
           env_from {
             config_map_ref {
-              name = kubernetes_config_map.cloudsql_proxy[each.key].metadata[0].name
+              name = kubernetes_config_map_v1.cloudsql_proxy[each.key].metadata[0].name
             }
           }
           args = compact([
@@ -97,7 +97,7 @@ resource "kubernetes_deployment" "cloudsql_proxy" {
         volume {
           name = "service-account-key"
           secret {
-            secret_name = kubernetes_secret.cloudsql_proxy[each.key].metadata[0].name
+            secret_name = kubernetes_secret_v1.cloudsql_proxy[each.key].metadata[0].name
           }
         }
       }
@@ -105,17 +105,17 @@ resource "kubernetes_deployment" "cloudsql_proxy" {
   }
 }
 
-resource "kubernetes_service" "cloudsql_proxy" {
+resource "kubernetes_service_v1" "cloudsql_proxy" {
   for_each = var.cloudsql_proxies
 
-  depends_on = [kubernetes_deployment.cloudsql_proxy]
+  depends_on = [kubernetes_deployment_v1.cloudsql_proxy]
 
   metadata {
     labels = {
       app = each.key
     }
     name      = each.key
-    namespace = kubernetes_namespace.cloudsql_proxy.metadata[0].name
+    namespace = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
   }
   spec {
     selector = {

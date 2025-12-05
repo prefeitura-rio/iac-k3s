@@ -28,7 +28,7 @@ resource "helm_release" "kube_cleanup_operator" {
   }]
 }
 
-resource "kubernetes_cluster_role" "kube_cleanup_operator" {
+resource "kubernetes_cluster_role_v1" "kube_cleanup_operator" {
   depends_on = [helm_release.kube_cleanup_operator]
   metadata {
     name = "kube-cleanup-operator"
@@ -47,7 +47,7 @@ resource "kubernetes_cluster_role" "kube_cleanup_operator" {
   }
 }
 
-resource "kubernetes_cluster_role_binding" "kube_cleanup_operator" {
+resource "kubernetes_cluster_role_binding_v1" "kube_cleanup_operator" {
   metadata {
     name = "kube-cleanup-operator"
   }
@@ -55,7 +55,7 @@ resource "kubernetes_cluster_role_binding" "kube_cleanup_operator" {
   role_ref {
     api_group = "rbac.authorization.k8s.io"
     kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.kube_cleanup_operator.metadata[0].name
+    name      = kubernetes_cluster_role_v1.kube_cleanup_operator.metadata[0].name
   }
 
   subject {
