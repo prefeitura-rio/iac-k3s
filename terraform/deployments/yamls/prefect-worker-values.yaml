@@ -8,7 +8,7 @@ worker:
 
   config:
     workPool: ${prefect_work_pool}
-    limit: 8
+    limit: 6
     prefetchSeconds: 30
     baseJobTemplate:
       configuration: |
@@ -165,13 +165,13 @@ worker:
                   }
                 ],
                 "title": "Job Watch Timeout Seconds",
-                "default": null,
+                "default": 1800,
                 "description": "Number of seconds to wait for each event emitted by a job before timing out. If not set, the worker will wait for each event indefinitely."
               },
               "pod_watch_timeout_seconds": {
                 "type": "integer",
                 "title": "Pod Watch Timeout Seconds",
-                "default": 60,
+                "default": 300,
                 "description": "Number of seconds to watch for pod creation before timing out."
               }
             },
