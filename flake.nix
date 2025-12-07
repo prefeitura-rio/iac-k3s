@@ -22,16 +22,22 @@
       in
       {
         devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            ansible
-            just
-            kubectl
-            kubernetes-helm
-            nodejs_latest
-            terraform
-          ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
-            incus
-          ];
+          buildInputs =
+            with pkgs;
+            [
+              ansible
+              just
+              kubectl
+              kubernetes-helm
+              nodejs_latest
+              terraform
+              (google-cloud-sdk.withExtraComponents (
+                with google-cloud-sdk.components; [ gke-gcloud-auth-plugin ]
+              ))
+            ]
+            ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
+              incus
+            ];
         };
       }
     );
