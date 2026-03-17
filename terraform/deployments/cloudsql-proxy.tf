@@ -1,3 +1,7 @@
+locals {
+  cloudsql_proxy_keys = keys(var.cloudsql_proxies)
+}
+
 resource "kubernetes_namespace_v1" "cloudsql_proxy" {
   metadata {
     name = "cloudsql-proxy"
@@ -12,9 +16,9 @@ resource "kubernetes_config_map_v1" "cloudsql_proxy" {
     namespace = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
   }
   data = {
-    CLOUD_SQL_INSTANCE_NAME   = each.value.instance_name
-    CLOUD_SQL_INSTANCE_REGION = each.value.instance_region
     CLOUD_SQL_PROJECT_ID      = each.value.project_id
+    CLOUD_SQL_INSTANCE_REGION = each.value.instance_region
+    CLOUD_SQL_INSTANCE_NAME   = each.value.instance_name
   }
 }
 
@@ -25,108 +29,58 @@ resource "kubernetes_secret_v1" "cloudsql_proxy" {
     name      = "${each.key}-sa-key"
     namespace = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
   }
+
   data = {
     "service-account-key.json" = base64decode(each.value.sa_key)
   }
 }
 
-resource "kubernetes_deployment_v1" "cloudsql_proxy" {
-  for_each = var.cloudsql_proxies
 
-  metadata {
-    labels = {
-      app = each.key
-    }
-    name      = each.key
-    namespace = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
-  }
+resource "helm_release" "cloudsql_proxy" {
+  for_each   = var.cloudsql_proxies
+  depends_on = [kubernetes_config_map_v1.cloudsql_proxy, kubernetes_secret_v1.cloudsql_proxy]
+  name       = each.key
+  namespace  = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
+  repository = "https://prefeitura-rio.github.io/charts"
+  chart      = "cloudsql-proxy"
+  version    = "1.0.1"
 
-  spec {
-    selector {
-      match_labels = {
-        app = each.key
-      }
-    }
-    replicas = 1
-    template {
-      metadata {
-        labels = {
-          app = each.key
-        }
-      }
-      spec {
-        container {
-          name  = each.key
-          image = "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1"
-          port {
-            container_port = each.value.port
-            protocol       = "TCP"
-          }
-          env_from {
-            config_map_ref {
-              name = kubernetes_config_map_v1.cloudsql_proxy[each.key].metadata[0].name
-            }
-          }
-          args = compact([
-            "--structured-logs",
-            "--port=${each.value.port}",
-            "--address=0.0.0.0",
-            each.value.private ? "--private-ip" : null,
-            "--credentials-file=/var/secrets/google/service-account-key.json",
-            "$(CLOUD_SQL_PROJECT_ID):$(CLOUD_SQL_INSTANCE_REGION):$(CLOUD_SQL_INSTANCE_NAME)"
-          ])
-          volume_mount {
-            name       = "service-account-key"
-            mount_path = "/var/secrets/google"
-            read_only  = true
-          }
-          security_context {
-            run_as_non_root = true
-          }
-          resources {
-            requests = {
-              memory = "128Mi"
-              cpu    = "100m"
-            }
-            limits = {
-              memory = "256Mi"
-              cpu    = "500m"
-            }
-          }
-        }
-        volume {
-          name = "service-account-key"
-          secret {
-            secret_name = kubernetes_secret_v1.cloudsql_proxy[each.key].metadata[0].name
-          }
+  values = [yamlencode({
+    fullnameOverride = each.key
+
+    instance = {
+      configMapRef = {
+        name = kubernetes_config_map_v1.cloudsql_proxy[each.key].metadata[0].name
+        keys = {
+          projectId = "CLOUD_SQL_PROJECT_ID"
+          region    = "CLOUD_SQL_INSTANCE_REGION"
+          name      = "CLOUD_SQL_INSTANCE_NAME"
         }
       }
     }
-  }
-}
 
-resource "kubernetes_service_v1" "cloudsql_proxy" {
-  for_each = var.cloudsql_proxies
+    secret = {
+      existingSecret = kubernetes_secret_v1.cloudsql_proxy[each.key].metadata[0].name
+    }
 
-  depends_on = [kubernetes_deployment_v1.cloudsql_proxy]
+    proxy = {
+      port            = tonumber(each.value.port)
+      privateIp       = each.value.private
+      autoIamAuthn    = false
+      maxConnections  = 100
+      healthCheckPort = 9090 + index(local.cloudsql_proxy_keys, each.key)
+    }
 
-  metadata {
-    labels = {
-      app = each.key
+    resources = {
+      requests = {
+        cpu    = "100m"
+        memory = "128Mi"
+      }
+      limits = {
+        cpu    = "500m"
+        memory = "256Mi"
+      }
     }
-    name      = each.key
-    namespace = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
-  }
-  spec {
-    selector = {
-      app = each.key
-    }
-    port {
-      port        = each.value.port
-      protocol    = "TCP"
-      name        = each.key
-      target_port = each.value.port
-    }
-    type = "ClusterIP"
-  }
+  })]
+
 }

@@ -1,10 +1,9 @@
-.claude
 .direnv
 .env
 .password
-terraform/.terraform
-terraform/*.tfstate*
-terraform/*.tfplan*
-terraform/files/kubeconfig
-terraform/files/nameserver_ip.txt
 incus-token.txt
+**/.terraform
+**/*.tfstate*
+**/*.tfplan*
+**/files/kubeconfig
+**/files/nameserver_ip.txt
