@@ -51,15 +51,11 @@ ensure_infisical_config:
 
 [private]
 ensure_incus_token: validate_tailscale
-    echo -e "{{cyan}}[→] Ensuring Incus token...{{reset}}"
     scripts/ensure-incus.sh
-    echo -e "{{green}}[✓] Incus token ready{{reset}}"
 
 [private]
 ensure_kubeconfig: ensure_incus_token
-    echo -e "{{cyan}}[→] Ensuring kubeconfig...{{reset}}"
     scripts/ensure-kubeconfig.sh
-    echo -e "{{green}}[✓] Kubeconfig ready{{reset}}"
 
 # Show environment configuration
 debug:
@@ -84,15 +80,11 @@ ansible: validate_tailscale ensure_infisical_config
 
 # Force regenerate Incus authentication token
 token_force: validate_tailscale
-    echo -e "{{cyan}}[→] Force regenerating Incus token...{{reset}}"
     scripts/ensure-incus.sh --force
-    echo -e "{{green}}[✓] Incus token regenerated{{reset}}"
 
 # Force regenerate Kubernetes cluster configuration
 kubeconfig_force: validate_tailscale ensure_incus_token
-    echo -e "{{cyan}}[→] Force regenerating kubeconfig...{{reset}}"
     scripts/ensure-kubeconfig.sh --force
-    echo -e "{{green}}[✓] Kubeconfig regenerated{{reset}}"
 
 # Initialize Terraform
 init: ensure_infisical_config
@@ -115,7 +107,7 @@ fmt:
 # Plan Terraform changes
 plan: validate_tailscale ensure_incus_token ensure_kubeconfig
     echo -e "{{cyan}}[→] Running Terraform plan...{{reset}}"
-    cd {{tf_dir}} && {{infisical}} run -- terraform plan -out {{tfplan}}
+    cd {{tf_dir}} && {{infisical}} run -- terraform plan -var="cluster_name=$CLUSTER_NAME" -out {{tfplan}}
     echo -e "{{green}}[✓] Plan completed{{reset}}"
 
 # Apply Terraform changes
@@ -132,7 +124,7 @@ setup: plan
 [confirm("Are you sure you want to destroy all resources?")]
 destroy: validate_tailscale
     echo -e "{{yellow}}[⚠] Running Terraform destroy...{{reset}}"
-    cd {{tf_dir}} && {{infisical}} run -- terraform destroy
+    cd {{tf_dir}} && {{infisical}} run -- terraform destroy -var="cluster_name=$CLUSTER_NAME"
     echo -e "{{green}}[✓] Destroy completed{{reset}}"
 
 # Clean generated files and Terraform plans
