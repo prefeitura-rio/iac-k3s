@@ -9,7 +9,7 @@ yellow := '\033[33m'
 blue := '\033[34m'
 reset := '\033[0m'
 
-bucket := "bucket=iplanrio-dia-terraform"
+bucket := "bucket=iplanrio-terraform-state"
 tfplan := "terraform.tfplan"
 infisical := "npx @infisical/cli@latest"
 infisical_json_path := ".infisical.json"
