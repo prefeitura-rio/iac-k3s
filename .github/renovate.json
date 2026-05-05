@@ -1,0 +1,85 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":separateMajorReleases",
+    ":combinePatchMinorReleases"
+  ],
+  "timezone": "America/Sao_Paulo",
+  "schedule": ["before 6am on Monday"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "assignAutomerge": false,
+  "platformAutomerge": false,
+  "terraform": {
+    "enabled": true,
+    "ignorePaths": [".terraform/**"]
+  },
+  "helm-values": {
+    "enabled": true
+  },
+  "dockerfile": {
+    "enabled": true
+  },
+  "kubernetes": {
+    "enabled": true
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Docker images with simple tag pattern in Terraform files",
+      "fileMatch": ["^terraform/.*\\.tf$", "^terraform/deployments/.*\\.tf$"],
+      "matchStrings": [
+        "(?:operator_image|image)\\s*=\\s*\"(?<depName>[^:]+):(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Critical infrastructure - manual review required",
+      "automerge": false,
+      "addLabels": ["critical-infrastructure"],
+      "matchPackageNames": [
+        "/tailscale-operator/",
+        "/signoz/",
+        "/prefect/",
+        "/airbyte/",
+        "/infisical/"
+      ]
+    },
+    {
+      "description": "Terraform providers - separate major releases",
+      "matchCategories": ["terraform"],
+      "separateMajorMinor": true,
+      "automerge": false,
+      "addLabels": ["terraform-provider"]
+    },
+    {
+      "description": "Cloud SQL Proxy - security critical",
+      "matchPackageNames": ["gcr.io/cloud-sql-connectors/cloud-sql-proxy"],
+      "automerge": false,
+      "addLabels": ["security-critical"]
+    }
+  ],
+  "hostRules": [
+    {
+      "matchHost": "charts.*.io",
+      "timeout": 20000
+    },
+    {
+      "matchHost": "oci://**",
+      "timeout": 30000
+    },
+    {
+      "matchHost": "gcr.io",
+      "timeout": 15000
+    },
+    {
+      "matchHost": "ghcr.io",
+      "timeout": 15000
+    }
+  ]
+}
