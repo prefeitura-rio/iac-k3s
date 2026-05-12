@@ -7,3 +7,5 @@ incus-token.txt
 **/*.tfplan*
 **/files/kubeconfig
 **/files/nameserver_ip.txt
+terraform/terraform.tfvars.json
+!terraform/terraform.tfvars.json.sops
