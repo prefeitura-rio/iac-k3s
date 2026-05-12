@@ -89,7 +89,7 @@ fmt:
 # Apply Terraform changes
 apply: ensure-init validate-tailscale ensure-incus-token ensure-kubeconfig
     echo -e "{{info}} Applying Terraform changes..."
-    cd {{tf_dir}} && sops exec-file --output-type json terraform.tfvars.json.sops 'terraform apply -var-file={} -var="cluster_name=$CLUSTER_NAME"'
+    cd {{tf_dir}} && sops exec-file --output-type json --filename tfvars.json terraform.tfvars.json.sops 'terraform apply -var-file={} -var="cluster_name=$CLUSTER_NAME"'
     echo -e "{{success}} Apply completed"
 
 # Edit secrets
@@ -100,5 +100,5 @@ edit-tfvars:
 [confirm("Are you sure you want to destroy all resources?")]
 destroy: ensure-init validate-tailscale
     echo -e "{{warning}} Running Terraform destroy..."
-    cd {{tf_dir}} && sops exec-file --output-type json terraform.tfvars.json.sops 'terraform destroy -var-file={} -var="cluster_name=$CLUSTER_NAME"'
+    cd {{tf_dir}} && sops exec-file --output-type json --filename tfvars.json terraform.tfvars.json.sops 'terraform destroy -var-file={} -var="cluster_name=$CLUSTER_NAME"'
     echo -e "{{success}} Destroy completed"
