@@ -165,6 +165,8 @@ main() {
         exit 1
     fi
 
+    chmod 600 "$kubeconfig_path"
+
     if ! update_server_hostname "$kubeconfig_path" "$cluster_hostname"; then
         exit 1
     fi
