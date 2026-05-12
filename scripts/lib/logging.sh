@@ -15,7 +15,7 @@ _colors_supported() {
 
 log_error() {
     if _colors_supported; then
-        echo -e "${RED}[✗] $1${RESET}" >&2
+        echo -e "${RED}[✗]${RESET} $1" >&2
     else
         echo "[✗] $1" >&2
     fi
@@ -23,7 +23,7 @@ log_error() {
 
 log_warning() {
     if _colors_supported; then
-        echo -e "${YELLOW}[⚠] $1${RESET}" >&2
+        echo -e "${YELLOW}[⚠]${RESET} $1" >&2
     else
         echo "[⚠] $1" >&2
     fi
@@ -31,7 +31,7 @@ log_warning() {
 
 log_info() {
     if _colors_supported; then
-        echo -e "${CYAN}[→] $1${RESET}"
+        echo -e "${CYAN}[→]${RESET} $1"
     else
         echo "[→] $1"
     fi
@@ -39,7 +39,7 @@ log_info() {
 
 log_success() {
     if _colors_supported; then
-        echo -e "${GREEN}[✓] $1${RESET}"
+        echo -e "${GREEN}[✓]${RESET} $1"
     else
         echo "[✓] $1"
     fi

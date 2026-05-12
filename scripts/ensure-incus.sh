@@ -121,7 +121,7 @@ generate_token() {
 
     if [[ "$is_trusted" == "true" ]]; then
         log_info "Generating token for trusted machine..."
-        if ! retry_ssh_command "$server_host" "incus config trust add --name=$client_name --quiet" > "$token_file"; then
+        if ! retry_ssh_command "$server_host" "incus config trust add $client_name --quiet" > "$token_file"; then
             log_error "Failed to generate token via SSH"
             return 1
         fi
