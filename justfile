@@ -82,6 +82,7 @@ ensure-init:
 auth:
     echo -e "{{ info }} Authenticating with Google Cloud..."
     gcloud auth application-default login
+    gcloud auth application-default set-quota-project rj-iplanrio-dia
     echo -e "{{ success }} Authentication completed"
 
 # Run Ansible playbook for host configuration
