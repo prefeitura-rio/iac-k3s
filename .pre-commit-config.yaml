@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.99.4
+    hooks:
+      - id: terraform_fmt
+        args:
+          - --args=-recursive
+  - repo: local
+    hooks:
+      - id: check-unencrypted-tfvars
+        name: check-unencrypted-tfvars
+        language: system
+        entry: just check-unencrypted-tfvars
+        pass_filenames: false
+        always_run: true
