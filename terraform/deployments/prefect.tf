@@ -34,7 +34,10 @@ resource "helm_release" "prefect_worker" {
   version    = "2025.12.31221620"
   namespace  = kubernetes_namespace_v1.prefect.metadata[0].name
   values = [yamlencode({
+    rolebinding = { create = true }
     worker = {
+      apiConfig                 = "selfHostedServer"
+      selfHostedServerApiConfig = { apiUrl = "${var.prefect_address}/api" }
       autoscaling = {
         enabled                           = true
         minReplicas                       = 1
@@ -47,98 +50,28 @@ resource "helm_release" "prefect_worker" {
         limit           = 6
         prefetchSeconds = 30
         baseJobTemplate = {
-          configuration = jsonencode({
-            variables = {
-              type = "object"
-              properties = {
-                env        = { type = "object", title = "Environment Variables", additionalProperties = { anyOf = [{ type = "string" }, { type = "null" }] } }
-                secretName = { type = "string", title = "Secret Name", default = "prefect-jobs-secrets-staging" }
-                name       = { anyOf = [{ type = "string" }, { type = "null" }], title = "Name", default = null }
-                image      = { anyOf = [{ type = "string" }, { type = "null" }], title = "Image", default = null }
-                labels     = { type = "object", title = "Labels", additionalProperties = { type = "string" } }
-                command    = { anyOf = [{ type = "string" }, { type = "null" }], title = "Command", default = null }
-                namespace  = { type = "string", title = "Namespace", default = kubernetes_namespace_v1.prefect.metadata[0].name }
-                backoff_limit             = { type = "integer", title = "Backoff Limit", default = 0, minimum = 0 }
-                stream_output             = { type = "boolean", title = "Stream Output", default = true }
-                cluster_config            = { anyOf = [{ "$ref" = "#/definitions/KubernetesClusterConfig" }, { type = "null" }], default = null }
-                finished_job_ttl          = { anyOf = [{ type = "integer" }, { type = "null" }], title = "Finished Job TTL", default = null }
-                image_pull_policy         = { enum = ["IfNotPresent", "Always", "Never"], type = "string", default = "IfNotPresent" }
-                service_account_name      = { anyOf = [{ type = "string" }, { type = "null" }], default = null }
-                job_watch_timeout_seconds = { anyOf = [{ type = "integer" }, { type = "null" }], default = 1800 }
-                pod_watch_timeout_seconds = { type = "integer", default = 300 }
-              }
-              definitions = {
-                KubernetesClusterConfig = {
-                  type     = "object"
-                  required = ["config", "context_name"]
-                  properties = {
-                    config       = { type = "object", additionalProperties = true }
-                    context_name = { type = "string" }
-                  }
-                }
-              }
-            }
-            job_configuration = {
-              env       = "{{ env }}"
-              name      = "{{ name }}"
-              labels    = "{{ labels }}"
-              command   = "{{ command }}"
-              namespace = "{{ namespace }}"
-              job_manifest = {
-                kind       = "Job"
-                apiVersion = "batch/v1"
-                metadata = {
-                  labels       = "{{ labels }}"
-                  namespace    = "{{ namespace }}"
-                  generateName = "{{ name }}-"
-                }
-                spec = {
-                  backoffLimit            = "{{ backoff_limit }}"
-                  ttlSecondsAfterFinished = "{{ finished_job_ttl }}"
-                  template = {
-                    spec = {
-                      completions        = 1
-                      parallelism        = 1
-                      restartPolicy      = "Never"
-                      serviceAccountName = "{{ service_account_name }}"
-                      containers = [{
-                        name             = "prefect-job"
-                        image            = "{{ image }}"
-                        imagePullPolicy  = "{{ image_pull_policy }}"
-                        args             = "{{ command }}"
-                        env              = "{{ env }}"
-                        envFrom          = [{ secretRef = { name = "{{ secretName }}" } }]
-                        imagePullSecrets = [{ name = kubernetes_secret_v1.gh_registry_config.metadata[0].name }]
-                      }]
-                    }
-                  }
-                }
-              }
-              stream_output             = "{{ stream_output }}"
-              cluster_config            = "{{ cluster_config }}"
-              job_watch_timeout_seconds = "{{ job_watch_timeout_seconds }}"
-              pod_watch_timeout_seconds = "{{ pod_watch_timeout_seconds }}"
-            }
+          configuration = templatefile("${path.module}/files/prefect-base-job-template.json", {
+            envs_secret_name         = "prefect-jobs-secrets-staging"
+            image_pull_secret_name   = kubernetes_secret_v1.gh_registry_config.metadata[0].name
+            prefect_worker_namespace = kubernetes_namespace_v1.prefect.metadata[0].name
           })
         }
       }
-      apiConfig                 = "selfHostedServer"
-      selfHostedServerApiConfig = { apiUrl = "${var.prefect_address}/api" }
-      replicaCount              = 1
+      replicaCount  = 1
+      livenessProbe = { enabled = true }
       resources = {
         requests = { memory = "4Gi", cpu = "1000m" }
         limits   = { memory = "8Gi", cpu = "2000m" }
       }
-      livenessProbe = { enabled = true }
     }
     role = {
       create = true
       extraPermissions = [
         { apiGroups = ["apiextensions.k8s.io"], resources = ["customresourcedefinitions"], verbs = ["get", "list", "watch"] },
         { apiGroups = [""], resources = ["namespaces"], verbs = ["get", "list", "watch"] },
+        { apiGroups = ["batch"], resources = ["jobs"], verbs = ["create", "get", "list", "watch", "delete"] },
       ]
     }
-    rolebinding = { create = true }
   })]
 }
 
