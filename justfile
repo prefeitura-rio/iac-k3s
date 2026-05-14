@@ -104,7 +104,7 @@ init:
     echo -e "{{ success }} Terraform initialized"
 
 # Validate Terraform configuration
-validate:
+validate: ensure-init
     echo -e "{{ info }} Validating Terraform configuration..."
     cd {{ tfdir }} && terraform validate
     echo -e "{{ success }} Validation completed"
@@ -116,7 +116,7 @@ fmt:
     echo -e "{{ success }} Formatting completed"
 
 # Apply Terraform changes
-apply: ensure-init ensure-kubeconfig
+apply: validate ensure-kubeconfig
     echo -e "{{ info }} Applying Terraform changes..."
     cd {{ tfdir }} && sops exec-file --output-type json --filename tfvars.json terraform.tfvars.json.sops 'terraform apply -var-file={} -var="cluster_name=$CLUSTER_NAME"'
     echo -e "{{ success }} Apply completed"
