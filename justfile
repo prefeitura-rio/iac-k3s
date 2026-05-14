@@ -121,6 +121,13 @@ apply: ensure-init ensure-kubeconfig
     cd {{ tfdir }} && sops exec-file --output-type json --filename tfvars.json terraform.tfvars.json.sops 'terraform apply -var-file={} -var="cluster_name=$CLUSTER_NAME"'
     echo -e "{{ success }} Apply completed"
 
+# Import an existing resource into Terraform state
+import address id: ensure-init
+    #!/usr/bin/env bash
+    export TF_ADDRESS='{{ address }}'
+    export TF_ID='{{ id }}'
+    cd {{ tfdir }} && sops exec-file --output-type json --filename tfvars.json terraform.tfvars.json.sops 'terraform import -var-file={} -var="cluster_name=$CLUSTER_NAME" "$TF_ADDRESS" "$TF_ID"'
+
 # Edit secrets
 edit-tfvars:
     sops edit --input-type json --output-type json {{ tfdir }}/terraform.tfvars.json.sops
