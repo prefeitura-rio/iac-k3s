@@ -65,3 +65,52 @@ resource "kubernetes_cluster_role_binding_v1" "kube_cleanup_operator" {
     namespace = helm_release.kube_cleanup_operator.namespace
   }
 }
+
+resource "helm_release" "helm_release_pruner" {
+  name        = "helm-release-pruner"
+  repository  = "https://charts.fairwinds.com/stable"
+  chart       = "helm-release-pruner"
+  version     = "4.0.3"
+  max_history = 3
+  namespace   = "kube-system"
+
+  values = [yamlencode({
+    pruner = {
+      dryRun                  = false
+      interval                = "6h"
+      olderThan               = "2w"
+      releaseFilter           = "^pipeline-"
+      preserveNamespace       = true
+      cleanupOrphanNamespaces = false
+    }
+    resources = {
+      requests = { cpu = "10m", memory = "32Mi" }
+      limits   = { memory = "256Mi" }
+    }
+  })]
+}
+
+resource "helm_release" "eraser" {
+  name             = "eraser"
+  repository       = "https://eraser-dev.github.io/eraser/charts"
+  chart            = "eraser"
+  version          = "1.4.1"
+  max_history      = 3
+  namespace        = "eraser-system"
+  create_namespace = true
+
+  values = [yamlencode({
+    config         = { inCluster = true }
+    serviceAccount = { create = true }
+    clusterRoleBinding = {
+      create          = true
+      clusterRoleName = "cluster-admin"
+    }
+    deploy = {
+      resources = {
+        requests = { cpu = "10m", memory = "32Mi" }
+        limits   = { memory = "128Mi" }
+      }
+    }
+  })]
+}
