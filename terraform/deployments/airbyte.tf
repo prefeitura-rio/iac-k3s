@@ -62,7 +62,7 @@ resource "helm_release" "airbyte" {
         limits   = { cpu = "1000m", memory = "2Gi" }
       }
     }
-    airbyteBootloader    = { nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" } }
+    airbyteBootloader      = { nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" } }
     connectorBuilderServer = { nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" } }
   })]
 }

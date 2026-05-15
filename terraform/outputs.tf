@@ -1,5 +1,0 @@
-output "k3s_master_ip" {
-  description = "IP address of the K3s master node"
-  value       = incus_instance.k3s_master.ipv4_address
-}
-

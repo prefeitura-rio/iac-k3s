@@ -38,8 +38,8 @@ resource "helm_release" "prefect_worker" {
     worker = {
       apiConfig                 = "selfHostedServer"
       selfHostedServerApiConfig = { apiUrl = "${var.prefect_address}/api" }
-      autoscaling  = { enabled = false }
-      replicaCount = 2
+      autoscaling               = { enabled = false }
+      replicaCount              = 2
       affinity = {
         podAntiAffinity = {
           requiredDuringSchedulingIgnoredDuringExecution = [{

@@ -1,8 +1,3 @@
-locals {
-  kubeconfig_path = var.kubeconfig_path
-  incus_token     = var.incus_token
-}
-
 resource "incus_storage_pool" "incus_pool" {
   name   = "incus"
   driver = "zfs"
@@ -120,7 +115,7 @@ resource "random_password" "k3s_token" {
 }
 
 module "deployments" {
-  count            = fileexists(local.kubeconfig_path) ? 1 : 0
+  count            = fileexists(var.kubeconfig_path) ? 1 : 0
   depends_on       = [incus_instance.k3s_workers]
   source           = "./deployments"
   cloudsql_proxies = var.cloudsql_proxies
