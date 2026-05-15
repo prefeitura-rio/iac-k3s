@@ -84,7 +84,12 @@ ensure-kubeconfig force="": ensure-incus
     fi
 
     if [[ -n "{{ force }}" ]]; then
-        rm -f "$sops_file"
+        rm -f "$sops_file" "{{ kubeconfig }}"
+    fi
+
+    if [[ -s "{{ kubeconfig }}" ]]; then
+        echo -e "{{ success }} Kubeconfig already valid"
+        exit 0
     fi
 
     if [[ -s "$sops_file" ]]; then
