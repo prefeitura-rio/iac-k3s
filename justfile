@@ -122,7 +122,7 @@ decrypt-kubeconfig:
     chmod 600 "{{ kubeconfig }}"
 
 [private]
-cleanup-tf-env:
+cleanup-kubeconfig:
     rm -f "{{ kubeconfig }}"
 
 [private]
@@ -140,7 +140,7 @@ ensure-init:
     echo -e "{{ success }} Terraform initialized"
 
 # Run kubectl command against the k3s cluster
-k *args: ensure-kubeconfig decrypt-kubeconfig && cleanup-tf-env
+k *args: ensure-kubeconfig decrypt-kubeconfig && cleanup-kubeconfig
     kubectl --kubeconfig="{{ kubeconfig }}" {{ args }}
 
 # Authenticate with Google Cloud
@@ -181,7 +181,7 @@ fmt:
     echo -e "{{ success }} Formatting completed"
 
 # Apply Terraform changes
-apply: ensure-kubeconfig validate decrypt-kubeconfig && cleanup-tf-env
+apply: ensure-kubeconfig validate decrypt-kubeconfig && cleanup-kubeconfig
     #!/usr/bin/env bash
     incus_token=$(sops decrypt --output-type binary "{{ sops_dir }}/incus-token.sops")
     tf_vars="-var=cluster_name=$CLUSTER_NAME -var=kubeconfig_path={{ kubeconfig }} -var=incus_token=$incus_token"
@@ -190,7 +190,7 @@ apply: ensure-kubeconfig validate decrypt-kubeconfig && cleanup-tf-env
     echo -e "{{ success }} Apply completed"
 
 # Import an existing resource into Terraform state
-import address id: ensure-kubeconfig validate decrypt-kubeconfig && cleanup-tf-env
+import address id: ensure-kubeconfig validate decrypt-kubeconfig && cleanup-kubeconfig
     #!/usr/bin/env bash
     incus_token=$(sops decrypt --output-type binary "{{ sops_dir }}/incus-token.sops")
     tf_vars="-var=cluster_name=$CLUSTER_NAME -var=kubeconfig_path={{ kubeconfig }} -var=incus_token=$incus_token"
@@ -202,7 +202,7 @@ edit-tfvars:
 
 # Destroy Terraform resources
 [confirm("Are you sure you want to destroy all resources?")]
-destroy: ensure-kubeconfig ensure-init decrypt-kubeconfig && cleanup-tf-env
+destroy: ensure-kubeconfig ensure-init decrypt-kubeconfig && cleanup-kubeconfig
     #!/usr/bin/env bash
     incus_token=$(sops decrypt --output-type binary "{{ sops_dir }}/incus-token.sops")
     tf_vars="-var=cluster_name=$CLUSTER_NAME -var=kubeconfig_path={{ kubeconfig }} -var=incus_token=$incus_token"
