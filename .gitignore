@@ -9,5 +9,7 @@ incus-token.txt
 **/files/nameserver_ip.txt
 .k3s/*
 !.k3s/.gitkeep
+scripts/pyrightconfig.json
 terraform/terraform.tfvars.json
 !terraform/terraform.tfvars.json.sops
+/scripts/__pycache__

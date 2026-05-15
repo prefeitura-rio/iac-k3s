@@ -5,8 +5,9 @@ variable "cluster_name" {
 }
 
 variable "kubeconfig_path" {
-  description = "Path to the kubeconfig file (decrypted at runtime by justfile)"
+  description = "Path to the decrypted kubeconfig file (injected at runtime by sops exec-file)"
   type        = string
+  sensitive   = true
   default     = ""
 }
 

@@ -17,3 +17,22 @@ repos:
         entry: just check-unencrypted-tfvars
         pass_filenames: false
         always_run: true
+      - id: ruff-lint
+        name: ruff lint
+        language: system
+        entry: ruff check
+        types: [python]
+        files: ^scripts/
+      - id: ruff-format
+        name: ruff format
+        language: system
+        entry: ruff format --check
+        types: [python]
+        files: ^scripts/
+      - id: basedpyright
+        name: basedpyright
+        language: system
+        entry: basedpyright scripts/
+        types: [python]
+        files: ^scripts/
+        pass_filenames: false

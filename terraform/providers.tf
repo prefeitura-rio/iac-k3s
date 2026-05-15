@@ -10,16 +10,17 @@ provider "incus" {
 }
 
 provider "kubernetes" {
-  config_path = fileexists(var.kubeconfig_path) ? var.kubeconfig_path : null
+  config_path = var.kubeconfig_path
 }
 
 provider "helm" {
   kubernetes = {
-    config_path = fileexists(var.kubeconfig_path) ? var.kubeconfig_path : null
+    config_path = var.kubeconfig_path
   }
 }
 
 provider "kubectl" {
-  config_path = fileexists(var.kubeconfig_path) ? var.kubeconfig_path : null
+  config_path      = var.kubeconfig_path
+  load_config_file = var.kubeconfig_path != ""
 }
 

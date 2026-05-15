@@ -115,7 +115,7 @@ resource "random_password" "k3s_token" {
 }
 
 module "deployments" {
-  count            = fileexists(var.kubeconfig_path) ? 1 : 0
+  count            = var.kubeconfig_path != "" ? 1 : 0
   depends_on       = [incus_instance.k3s_workers]
   source           = "./deployments"
   cloudsql_proxies = var.cloudsql_proxies
