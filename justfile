@@ -114,6 +114,10 @@ ensure-kubeconfig force="": ensure-incus
 [private]
 decrypt-kubeconfig:
     #!/usr/bin/env bash
+    if [[ -s "{{ kubeconfig }}" ]]; then
+        exit 0
+    fi
+
     sops decrypt --output-type binary "{{ kubeconfig_sops }}" > "{{ kubeconfig }}"
     chmod 600 "{{ kubeconfig }}"
 
