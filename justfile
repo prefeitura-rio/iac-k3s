@@ -4,7 +4,6 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 info := '\033[36m[→]\033[0m'
 success := '\033[32m[✓]\033[0m'
 error := '\033[31m[✗]\033[0m'
-warning := '\033[33m[⚠]\033[0m'
 tfdir := "terraform"
 sops_dir := env("K3S_SOPS_DIR", ".k3s")
 
@@ -28,11 +27,6 @@ validate-tailscale:
 [private]
 ensure-incus force="":
     python3 -m scripts.ensure_incus {{ if force != "" { "--force" } else { "" } }}
-
-# Ensure kubeconfig.sops exists, fetching from cluster via Incus if needed
-[private]
-ensure-kubeconfig force="":
-    python3 -m scripts.ensure_kubeconfig {{ if force != "" { "--force" } else { "" } }}
 
 # Initialize Terraform backend if not already done
 [private]
@@ -61,7 +55,7 @@ auth:
     echo -e "{{ success }} Authentication completed"
 
 # Run Ansible playbook for host configuration
-ansible: validate-tailscale ensure-incus
+ansible: validate-tailscale
     echo -e "{{ info }} Running Ansible playbook..."
     ansible-playbook playbook.yaml
     echo -e "{{ success }} Ansible playbook completed"
@@ -69,8 +63,9 @@ ansible: validate-tailscale ensure-incus
 # Rotate Incus authentication token (revoke + regenerate + re-encrypt)
 rotate-incus-token: (ensure-incus "force")
 
-# Rotate Kubernetes cluster configuration (re-fetch + re-encrypt)
-rotate-kubeconfig: (ensure-kubeconfig "force")
+# Bootstrap or rotate kubeconfig: fetch from cluster and encrypt
+rotate-kubeconfig: validate-tailscale ensure-incus
+    python3 -m scripts.ensure_kubeconfig
 
 # Initialize Terraform (forced)
 init:
@@ -79,7 +74,7 @@ init:
     echo -e "{{ success }} Terraform initialized"
 
 # Validate Terraform configuration
-validate: ensure-init
+validate:
     echo -e "{{ info }} Validating Terraform configuration..."
     cd {{ tfdir }} && terraform validate
     echo -e "{{ success }} Validation completed"
@@ -91,12 +86,12 @@ fmt:
     echo -e "{{ success }} Formatting completed"
 
 # Apply Terraform changes
-apply: validate-tailscale ensure-kubeconfig validate
-    python3 -m scripts.terraform_run apply
+apply: validate-tailscale ensure-init
+    python3 -m scripts.terraform apply
 
 # Import an existing resource into Terraform state
-import address id: validate-tailscale ensure-kubeconfig validate
-    python3 -m scripts.terraform_run import '{{ address }}' '{{ id }}'
+import address id: validate-tailscale ensure-init
+    python3 -m scripts.terraform import '{{ address }}' '{{ id }}'
 
 # Edit secrets
 edit-tfvars:
@@ -104,5 +99,5 @@ edit-tfvars:
 
 # Destroy Terraform resources
 [confirm("Are you sure you want to destroy all resources?")]
-destroy: validate-tailscale ensure-kubeconfig ensure-init
-    python3 -m scripts.terraform_run destroy
+destroy: validate-tailscale ensure-init
+    python3 -m scripts.terraform destroy

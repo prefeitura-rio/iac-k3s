@@ -1,7 +1,6 @@
 .direnv
 .env
 .password
-incus-token.txt
 **/files/kubeconfig
 **/.terraform
 **/*.tfstate*

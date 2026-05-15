@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate that Tailscale is connected to squirrel-regulus.ts.net."""
 
-import json
+from json import JSONDecodeError, loads
 from typing import TypedDict, cast
 
 from .lib import die, run, success
@@ -28,8 +28,8 @@ def validate_tailscale() -> None:
         die(f"Not connected to {EXPECTED_DOMAIN} — run: tailscale up")
 
     try:
-        status = cast(TailscaleStatus, json.loads(result.stdout))
-    except json.JSONDecodeError:
+        status = cast(TailscaleStatus, loads(result.stdout))
+    except JSONDecodeError:
         die(f"Not connected to {EXPECTED_DOMAIN} — run: tailscale up")
 
     dns_name = status.get("Self", {}).get("DNSName", "")

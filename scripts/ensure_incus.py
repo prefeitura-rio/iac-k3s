@@ -1,37 +1,41 @@
 #!/usr/bin/env python3
 """Ensure Incus remote is configured with a valid encrypted token."""
 
-import argparse
-import shutil
-import socket
-import subprocess
-import time
+from os import environ
 from pathlib import Path
+from shutil import which
+from socket import gethostname
+from subprocess import CompletedProcess
+from sys import argv
+from time import time
 
-from pydantic import BaseModel
-
-from .config import config
-from .lib import die, info, run, run_binary, success, warning
+from .lib import die, info, run, run_binary, sops_dir, success, warning
 
 CACHE_TTL_MINUTES = 60
 
 
-class Args(BaseModel):
-    force: bool
+def parse_force() -> bool:
+    return "--force" in argv[1:]
 
 
-def parse_args() -> Args:
-    parser = argparse.ArgumentParser(description=__doc__)
-    _ = parser.add_argument(
-        "--force", action="store_true", help="Force token regeneration"
-    )
-    return Args.model_validate(vars(parser.parse_args()))
+def incus_env() -> tuple[str, str]:
+    host = environ.get("INCUS_SERVER_HOST", "")
+    user = environ.get("INCUS_SERVER_USER", "")
+    missing = [
+        name
+        for name, val in (("INCUS_SERVER_HOST", host), ("INCUS_SERVER_USER", user))
+        if not val
+    ]
+    if missing:
+        die(f"Missing required env vars: {', '.join(missing)} (run 'direnv allow')")
+    return host, user
 
 
 def cache_is_fresh() -> bool:
-    if not config.paths["cache_incus"].exists():
+    cache = sops_dir() / ".cache-incus"
+    if not cache.exists():
         return False
-    age_minutes = (time.time() - config.paths["cache_incus"].stat().st_mtime) / 60
+    age_minutes = (time() - cache.stat().st_mtime) / 60
     return age_minutes < CACHE_TTL_MINUTES
 
 
@@ -39,17 +43,17 @@ def machine_id() -> str:
     for path in [Path("/etc/machine-id"), Path("/var/lib/dbus/machine-id")]:
         if path.exists():
             return path.read_text().strip()
-    return socket.gethostname()
+    return gethostname()
 
 
 def client_name() -> str:
     mid = machine_id()[:8]
-    return f"{socket.gethostname()}-{mid}"
+    return f"{gethostname()}-{mid}"
 
 
 def ssh_run(
     user: str, host: str, remote_cmd: str, *, capture: bool = False
-) -> subprocess.CompletedProcess[str]:
+) -> CompletedProcess[str]:
     return run(
         [
             "ssh",
@@ -66,40 +70,36 @@ def ssh_run(
 
 
 def ensure_incus(force: bool) -> None:
-    if not shutil.which("incus"):
+    if not which("incus"):
         warning("incus not installed — skipping remote configuration")
         return
 
+    d = sops_dir()
+    incus_token_sops = d / "incus-token.sops"
+    cache = d / ".cache-incus"
+
     if force:
-        config.paths["incus_token_sops"].unlink(missing_ok=True)
-        config.paths["cache_incus"].unlink(missing_ok=True)
+        incus_token_sops.unlink(missing_ok=True)
+        cache.unlink(missing_ok=True)
 
     if cache_is_fresh():
         return
 
+    host, user = incus_env()
     name = client_name()
 
-    config.paths["incus_token_sops"].unlink(missing_ok=True)
-    info(f"Generating Incus token for {name} via {config.INCUS_SERVER_HOST}...")
+    incus_token_sops.unlink(missing_ok=True)
+    info(f"Generating Incus token for {name} via {host}...")
 
-    _ = ssh_run(
-        config.INCUS_SERVER_USER,
-        config.INCUS_SERVER_HOST,
-        f"incus config trust revoke-token {name}",
-    )
+    _ = ssh_run(user, host, f"incus config trust revoke-token {name}")
 
-    result = ssh_run(
-        config.INCUS_SERVER_USER,
-        config.INCUS_SERVER_HOST,
-        f"incus config trust add {name}",
-        capture=True,
-    )
+    result = ssh_run(user, host, f"incus config trust add {name}", capture=True)
     token = result.stdout.strip().splitlines()[-1] if result.stdout.strip() else ""
 
     if not token or len(token) < 32:
-        die(f"Failed to obtain a valid token from {config.INCUS_SERVER_HOST}")
+        die(f"Failed to obtain a valid token from {host}")
 
-    config.paths["sops_dir"].mkdir(parents=True, exist_ok=True)
+    d.mkdir(parents=True, exist_ok=True)
 
     encrypt = run_binary(
         [
@@ -110,15 +110,15 @@ def ensure_incus(force: bool) -> None:
             "--output-type",
             "binary",
             "--filename-override",
-            str(config.paths["incus_token_sops"]),
+            str(incus_token_sops),
             "/dev/stdin",
         ],
         capture=True,
         stdin=token.encode(),
     )
 
-    _ = config.paths["incus_token_sops"].write_bytes(encrypt.stdout)
-    _ = config.paths["incus_token_sops"].chmod(0o600)
+    _ = incus_token_sops.write_bytes(encrypt.stdout)
+    _ = incus_token_sops.chmod(0o600)
 
     _ = run(
         [
@@ -126,7 +126,7 @@ def ensure_incus(force: bool) -> None:
             "remote",
             "add",
             "k3s",
-            f"{config.INCUS_SERVER_HOST}:8443",
+            f"{host}:8443",
             "--accept-certificate",
             f"--token={token}",
         ],
@@ -134,10 +134,9 @@ def ensure_incus(force: bool) -> None:
     )
     _ = run(["incus", "remote", "switch", "k3s"])
 
-    _ = config.paths["cache_incus"].touch()
+    _ = cache.touch()
     success("Incus client configured")
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    ensure_incus(force=args.force)
+    ensure_incus(force=parse_force())

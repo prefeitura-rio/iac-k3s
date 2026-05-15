@@ -1,6 +1,12 @@
-import subprocess
-import sys
+from os import environ
+from pathlib import Path
+from subprocess import CompletedProcess, run as subprocess_run
+from sys import exit, stderr
 from typing import NoReturn
+
+
+def sops_dir() -> Path:
+    return Path(environ.get("K3S_SOPS_DIR", ".k3s"))
 
 
 INFO = "\033[36m[→]\033[0m"
@@ -10,24 +16,24 @@ WARNING = "\033[33m[⚠]\033[0m"
 
 
 def info(msg: str) -> None:
-    print(f"{INFO} {msg}", file=sys.stderr)
+    print(f"{INFO} {msg}", file=stderr)
 
 
 def success(msg: str) -> None:
-    print(f"{SUCCESS} {msg}", file=sys.stderr)
+    print(f"{SUCCESS} {msg}", file=stderr)
 
 
 def error(msg: str) -> None:
-    print(f"{ERROR} {msg}", file=sys.stderr)
+    print(f"{ERROR} {msg}", file=stderr)
 
 
 def warning(msg: str) -> None:
-    print(f"{WARNING} {msg}", file=sys.stderr)
+    print(f"{WARNING} {msg}", file=stderr)
 
 
 def die(msg: str) -> NoReturn:
     error(msg)
-    sys.exit(1)
+    exit(1)
 
 
 def run(
@@ -37,8 +43,8 @@ def run(
     check: bool = True,
     stdin: str | None = None,
     env: dict[str, str] | None = None,
-) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
+) -> CompletedProcess[str]:
+    return subprocess_run(
         cmd,
         text=True,
         capture_output=capture,
@@ -54,8 +60,8 @@ def run_binary(
     capture: bool = False,
     check: bool = True,
     stdin: bytes | None = None,
-) -> subprocess.CompletedProcess[bytes]:
-    return subprocess.run(
+) -> CompletedProcess[bytes]:
+    return subprocess_run(
         cmd,
         capture_output=capture,
         check=check,

@@ -1,37 +1,17 @@
 #!/usr/bin/env python3
 """Fetch, patch, and encrypt the k3s kubeconfig from the Incus master node."""
 
-import argparse
+from os import environ
 
-from pydantic import BaseModel
-
-from .config import config
-from .ensure_incus import ensure_incus
-from .lib import die, info, run, run_binary, success
-
-
-class Args(BaseModel):
-    force: bool
-
-
-def parse_args() -> Args:
-    parser = argparse.ArgumentParser(description=__doc__)
-    _ = parser.add_argument(
-        "--force", action="store_true", help="Force kubeconfig re-fetch"
-    )
-    return Args.model_validate(vars(parser.parse_args()))
-
-
-def kubeconfig_exists() -> bool:
-    kubeconfig = config.paths["kubeconfig_sops"]
-    return kubeconfig.exists() and kubeconfig.stat().st_size > 0
+from .lib import die, info, run, run_binary, sops_dir, success
 
 
 def fetch_and_encrypt(cluster_name: str, hostname: str) -> None:
-    kubeconfig = config.paths["kubeconfig_sops"]
+    d = sops_dir()
+    kubeconfig = d / "kubeconfig.sops"
 
     info(f"Fetching kubeconfig from {cluster_name}-master...")
-    config.paths["sops_dir"].mkdir(parents=True, exist_ok=True)
+    d.mkdir(parents=True, exist_ok=True)
 
     pull = run(
         [
@@ -79,23 +59,20 @@ def fetch_and_encrypt(cluster_name: str, hostname: str) -> None:
         capture=True,
         check=False,
     )
+
     if verify.returncode != 0:
         die("Kubeconfig fetched but cluster unreachable")
 
     success(f"Kubeconfig encrypted at {kubeconfig}")
 
 
-def ensure_kubeconfig(force: bool) -> None:
-    if force:
-        config.paths["kubeconfig_sops"].unlink(missing_ok=True)
-
-    if kubeconfig_exists():
-        return
-
-    ensure_incus(force=force)
-    fetch_and_encrypt(config.CLUSTER_NAME, config.K3S_MASTER_HOSTNAME)
-
-
 if __name__ == "__main__":
-    args = parse_args()
-    ensure_kubeconfig(force=args.force)
+    cluster_name = environ.get("CLUSTER_NAME", "")
+    hostname = environ.get("K3S_MASTER_HOSTNAME", "k3s-master")
+
+    if not cluster_name:
+        die("CLUSTER_NAME is not set (run 'direnv allow')")
+
+    d = sops_dir()
+    (d / "kubeconfig.sops").unlink(missing_ok=True)
+    fetch_and_encrypt(cluster_name, hostname)
