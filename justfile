@@ -112,7 +112,7 @@ ensure-kubeconfig force="": ensure-incus
     echo -e "{{ success }} Kubeconfig encrypted at {{ sops_dir }}/kubeconfig.sops"
 
 [private]
-setup-tf-env:
+decrypt-kubeconfig:
     #!/usr/bin/env bash
     sops decrypt --output-type binary "{{ kubeconfig_sops }}" > "{{ kubeconfig }}"
     chmod 600 "{{ kubeconfig }}"
@@ -173,7 +173,7 @@ fmt:
     echo -e "{{ success }} Formatting completed"
 
 # Apply Terraform changes
-apply: ensure-kubeconfig validate setup-tf-env && cleanup-tf-env
+apply: ensure-kubeconfig validate decrypt-kubeconfig && cleanup-tf-env
     #!/usr/bin/env bash
     incus_token=$(sops decrypt --output-type binary "{{ sops_dir }}/incus-token.sops")
     tf_vars="-var=cluster_name=$CLUSTER_NAME -var=kubeconfig_path={{ kubeconfig }} -var=incus_token=$incus_token"
@@ -182,7 +182,7 @@ apply: ensure-kubeconfig validate setup-tf-env && cleanup-tf-env
     echo -e "{{ success }} Apply completed"
 
 # Import an existing resource into Terraform state
-import address id: ensure-kubeconfig validate setup-tf-env && cleanup-tf-env
+import address id: ensure-kubeconfig validate decrypt-kubeconfig && cleanup-tf-env
     #!/usr/bin/env bash
     incus_token=$(sops decrypt --output-type binary "{{ sops_dir }}/incus-token.sops")
     tf_vars="-var=cluster_name=$CLUSTER_NAME -var=kubeconfig_path={{ kubeconfig }} -var=incus_token=$incus_token"
@@ -194,7 +194,7 @@ edit-tfvars:
 
 # Destroy Terraform resources
 [confirm("Are you sure you want to destroy all resources?")]
-destroy: ensure-kubeconfig ensure-init setup-tf-env && cleanup-tf-env
+destroy: ensure-kubeconfig ensure-init decrypt-kubeconfig && cleanup-tf-env
     #!/usr/bin/env bash
     incus_token=$(sops decrypt --output-type binary "{{ sops_dir }}/incus-token.sops")
     tf_vars="-var=cluster_name=$CLUSTER_NAME -var=kubeconfig_path={{ kubeconfig }} -var=incus_token=$incus_token"
