@@ -23,7 +23,7 @@ validate-tailscale:
 ensure-incus force="": validate-tailscale
     #!/usr/bin/env bash
     [[ -n "{{ force }}" ]] && rm -f "${INCUS_TOKEN_FILE:-}"
-    if incus list &>/dev/null; then
+    if command -v incus &>/dev/null && incus list &>/dev/null; then
         echo -e "{{ success }} Incus connection already working"
         exit 0
     fi
@@ -31,9 +31,14 @@ ensure-incus force="": validate-tailscale
         echo -e "{{ error }} INCUS_TOKEN_FILE, INCUS_SERVER_HOST and INCUS_SERVER_USER must be set (run 'direnv allow')"
         exit 1
     fi
+    if ! command -v incus &>/dev/null; then
+        echo -e "{{ warning }} incus not installed — skipping remote configuration"
+        exit 0
+    fi
     machine_id=$(cat /etc/machine-id 2>/dev/null || cat /var/lib/dbus/machine-id 2>/dev/null || hostname)
     client_name="${HOSTNAME:-$(hostname)}-${machine_id:0:8}"
     echo -e "{{ info }} Generating Incus token for ${client_name} via ${INCUS_SERVER_HOST}..."
+    ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new "$INCUS_SERVER_USER@$INCUS_SERVER_HOST" "incus config trust revoke-token ${client_name}" &>/dev/null || true
     token=$(ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new "$INCUS_SERVER_USER@$INCUS_SERVER_HOST" "incus config trust add ${client_name}" | tail -n 1)
     if [[ -z "$token" || ${#token} -lt 32 ]]; then
         echo -e "{{ error }} Failed to obtain a valid token from ${INCUS_SERVER_HOST}"

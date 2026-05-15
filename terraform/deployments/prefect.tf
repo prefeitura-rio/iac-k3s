@@ -38,12 +38,17 @@ resource "helm_release" "prefect_worker" {
     worker = {
       apiConfig                 = "selfHostedServer"
       selfHostedServerApiConfig = { apiUrl = "${var.prefect_address}/api" }
-      autoscaling = {
-        enabled                           = true
-        minReplicas                       = 1
-        maxReplicas                       = 5
-        targetCPUUtilizationPercentage    = 80
-        targetMemoryUtilizationPercentage = 80
+      autoscaling  = { enabled = false }
+      replicaCount = 2
+      affinity = {
+        podAntiAffinity = {
+          requiredDuringSchedulingIgnoredDuringExecution = [{
+            topologyKey = "kubernetes.io/hostname"
+            labelSelector = {
+              matchLabels = { "app.kubernetes.io/name" = "prefect-worker" }
+            }
+          }]
+        }
       }
       config = {
         workPool        = "k3s-pool"
@@ -57,11 +62,10 @@ resource "helm_release" "prefect_worker" {
           })
         }
       }
-      replicaCount  = 1
       livenessProbe = { enabled = true }
       resources = {
-        requests = { memory = "4Gi", cpu = "1000m" }
-        limits   = { memory = "8Gi", cpu = "2000m" }
+        requests = { cpu = "250m", memory = "256Mi" }
+        limits   = { cpu = "1", memory = "512Mi" }
       }
     }
     role = {
