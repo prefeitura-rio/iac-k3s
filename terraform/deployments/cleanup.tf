@@ -112,5 +112,10 @@ resource "helm_release" "eraser" {
         limits   = { memory = "128Mi" }
       }
     }
+    runtimeConfig = {
+      components = {
+        scanner = { enabled = false }
+      }
+    }
   })]
 }

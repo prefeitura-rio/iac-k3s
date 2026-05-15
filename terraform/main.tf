@@ -1,6 +1,6 @@
 locals {
-  kubeconfig_path = "./files/kubeconfig"
-  incus_token     = fileexists("${path.root}/../incus-token.txt") ? file("${path.root}/../incus-token.txt") : ""
+  kubeconfig_path = var.kubeconfig_path
+  incus_token     = var.incus_token
 }
 
 resource "incus_storage_pool" "incus_pool" {

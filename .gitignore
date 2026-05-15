@@ -2,10 +2,12 @@
 .env
 .password
 incus-token.txt
+**/files/kubeconfig
 **/.terraform
 **/*.tfstate*
 **/*.tfplan*
-**/files/kubeconfig
 **/files/nameserver_ip.txt
+.k3s/kubeconfig.sops
+.k3s/incus-token.sops
 terraform/terraform.tfvars.json
 !terraform/terraform.tfvars.json.sops

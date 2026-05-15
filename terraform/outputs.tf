@@ -3,7 +3,3 @@ output "k3s_master_ip" {
   value       = incus_instance.k3s_master.ipv4_address
 }
 
-output "kubeconfig_path" {
-  description = "Path to the kubeconfig file"
-  value       = abspath("./files/kubeconfig")
-}

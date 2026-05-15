@@ -4,6 +4,19 @@ variable "cluster_name" {
   default     = "k3s"
 }
 
+variable "kubeconfig_path" {
+  description = "Path to the kubeconfig file (decrypted at runtime by justfile)"
+  type        = string
+  default     = ""
+}
+
+variable "incus_token" {
+  description = "Incus authentication token (decrypted at runtime by justfile)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "worker_count" {
   description = "Number of K3s worker nodes"
   type        = number
