@@ -135,6 +135,10 @@ ensure-init:
     cd {{ tfdir }} && terraform init -backend-config bucket=iplanrio-terraform-state -upgrade -reconfigure
     echo -e "{{ success }} Terraform initialized"
 
+# Run kubectl command against the k3s cluster
+k *args: ensure-kubeconfig decrypt-kubeconfig && cleanup-tf-env
+    kubectl --kubeconfig="{{ kubeconfig }}" {{ args }}
+
 # Authenticate with Google Cloud
 auth:
     echo -e "{{ info }} Authenticating with Google Cloud..."
