@@ -94,6 +94,14 @@ variable "infisical" {
   })
 }
 
+variable "datametrica" {
+  description = "Datametrica MSSQL server configuration"
+  type = object({
+    host = string
+    port = optional(number, 1433)
+  })
+}
+
 variable "cloudsql_proxies" {
   description = "CloudSQL proxy configurations"
   type = map(object({

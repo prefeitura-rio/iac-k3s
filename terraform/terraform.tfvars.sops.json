@@ -37,6 +37,9 @@
 			"client_secret": "ENC[AES256_GCM,data:espMBUzH6DnXoypU0b5bfYTjwRotwyzeNHXeD2ZBB4a6Nue+VATXTe/CaCutHp2uFMTLMe4bIBo2KQKSW6sg,iv:qdXMlvW1HFGgne/AjZLumdmJRFJOAR1PbXbbEKbwWtc=,tag:0z7bUU8GLiRR2cScABXThA==,type:str]"
 		}
 	},
+	"datametrica": {
+		"host": "ENC[AES256_GCM,data:98XVDeC9EoQC5A==,iv:8UXtvvXBxi6kHFnKrh6iQIdPHYi5HnToqjWm+PP/R0w=,tag:S4LCl8k6g8Qhru5BniIjMg==,type:str]"
+	},
 	"sops": {
 		"gcp_kms": [
 			{
@@ -45,8 +48,8 @@
 				"enc": "CiQAC9b+70Z/Rx/8gmMqo4kkSeb4hDwSQwlfYjWGKU90yLA3PtcSSQBI03ms4JMa1/P5YtmNjXfTG9lpV2DyY+UYnBh6t0ip6ybSn5TWTikOx0Fg3PYVMB6BfRDQovZQJ+E+uALGleNNgRr8dBWpZl4="
 			}
 		],
-		"lastmodified": "2026-05-12T20:37:25Z",
-		"mac": "ENC[AES256_GCM,data:JTNIMjzq7oam7zPMjKrFOins8Nym7HWhWFUJBn1HMCzbT69qiI3mr0N3bE42SzXjEiVw6fgvgc0MLSa3oDxIczVaPwhnZwJNyXMDjK67HKU8rMJdYpqTtuFwjKpNN76Ad6Q8UPTP8bBABFqJv46Jn2wSyQBXAT0wfF8qdMlcQ4w=,iv:O+OMeBbU5cdYFx73noZiz3pQNuL3jYF9z7OZsZqEqd4=,tag:K/ekKMS+lwqV3sQ9k91Egw==,type:str]",
+		"lastmodified": "2026-05-18T14:42:43Z",
+		"mac": "ENC[AES256_GCM,data:GEpV/DxKEiV3Lx56hTJU1/T/9T+fTz9sghyhq/Oy65FOsIDuuw7TOH7b9iRJ9Afvr09bAgwjVrCaV8ReJXFOgx2OYvgUMiQ0t0vRE82x8nUs963ntArGUSa7grFWTIfj4eElW6gLOzUJx96+56cSfwSaZzBO/+ovLsW1EfN28bI=,iv:65Oeprtfy1pZvkfuCSYi/HAx6roX+QC38t+0YGeqmy4=,tag:cR2aC1o/0EP1iYl30igyog==,type:str]",
 		"unencrypted_suffix": "_unencrypted",
 		"version": "3.12.2"
 	}

@@ -125,6 +125,108 @@ resource "kubernetes_deployment_v1" "squid" {
   }
 }
 
+resource "kubernetes_config_map_v1" "datametrica_config" {
+  metadata {
+    name      = "datametrica-config"
+    namespace = kubernetes_namespace_v1.proxy.metadata[0].name
+  }
+
+  data = {
+    "nginx.conf" = <<-EOF
+      events {}
+
+      stream {
+        server {
+          listen     ${var.datametrica.port};
+          proxy_pass ${var.datametrica.host}:${var.datametrica.port};
+        }
+      }
+    EOF
+  }
+}
+
+resource "kubernetes_deployment_v1" "datametrica" {
+  metadata {
+    name      = "datametrica"
+    namespace = kubernetes_namespace_v1.proxy.metadata[0].name
+    labels = {
+      app = "datametrica"
+    }
+  }
+
+  spec {
+    replicas = 1
+
+    selector {
+      match_labels = {
+        app = "datametrica"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "datametrica"
+        }
+      }
+
+      spec {
+        container {
+          name  = "nginx"
+          image = "nginx:alpine"
+
+          port {
+            name           = "mssql"
+            container_port = var.datametrica.port
+            protocol       = "TCP"
+          }
+
+          volume_mount {
+            name       = "config"
+            mount_path = "/etc/nginx/nginx.conf"
+            sub_path   = "nginx.conf"
+            read_only  = true
+          }
+
+          resources {
+            requests = {
+              cpu    = "50m"
+              memory = "32Mi"
+            }
+            limits = {
+              cpu    = "200m"
+              memory = "64Mi"
+            }
+          }
+
+          liveness_probe {
+            tcp_socket {
+              port = var.datametrica.port
+            }
+            initial_delay_seconds = 10
+            period_seconds        = 10
+          }
+
+          readiness_probe {
+            tcp_socket {
+              port = var.datametrica.port
+            }
+            initial_delay_seconds = 5
+            period_seconds        = 5
+          }
+        }
+
+        volume {
+          name = "config"
+          config_map {
+            name = kubernetes_config_map_v1.datametrica_config.metadata[0].name
+          }
+        }
+      }
+    }
+  }
+}
+
 resource "kubernetes_service_v1" "squid" {
   metadata {
     name      = "proxy"
@@ -147,6 +249,36 @@ resource "kubernetes_service_v1" "squid" {
       name        = "proxy"
       port        = 3128
       target_port = 3128
+      protocol    = "TCP"
+    }
+
+    type                = "LoadBalancer"
+    load_balancer_class = "tailscale"
+  }
+}
+
+resource "kubernetes_service_v1" "datametrica" {
+  metadata {
+    name      = "datametrica"
+    namespace = kubernetes_namespace_v1.proxy.metadata[0].name
+    labels = {
+      app = "datametrica"
+    }
+    annotations = {
+      "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix},tag:proxy"
+      "tailscale.com/hostname" = "datametrica"
+    }
+  }
+
+  spec {
+    selector = {
+      app = "datametrica"
+    }
+
+    port {
+      name        = "mssql"
+      port        = var.datametrica.port
+      target_port = var.datametrica.port
       protocol    = "TCP"
     }
 

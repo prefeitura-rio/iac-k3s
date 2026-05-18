@@ -73,7 +73,7 @@ def decrypt_tfvars(tfvars_sops: Path) -> str:
 
 def terraform_run(command: Command, extra: list[str], tfdir: Path) -> None:
     kubeconfig_sops = sops_dir() / "kubeconfig.sops"
-    tfvars_sops = tfdir / "terraform.tfvars.json.sops"
+    tfvars_sops = tfdir / "terraform.tfvars.sops.json"
     incus_token = decrypt_incus_token()
     tfvars_json = decrypt_tfvars(tfvars_sops)
 

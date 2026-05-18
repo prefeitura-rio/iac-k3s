@@ -1,4 +1,4 @@
 
 # Plaintext secret dumps
 *.json
-!terraform.tfvars.json.sops
+!terraform.tfvars.sops.json

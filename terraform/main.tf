@@ -119,6 +119,7 @@ module "deployments" {
   depends_on       = [incus_instance.k3s_workers]
   source           = "./deployments"
   cloudsql_proxies = var.cloudsql_proxies
+  datametrica      = var.datametrica
   github           = var.github
   infisical        = var.infisical
   k3s_master       = incus_instance.k3s_master

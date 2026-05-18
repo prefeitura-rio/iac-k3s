@@ -95,7 +95,7 @@ import address id: validate-tailscale ensure-init
 
 # Edit secrets
 edit-tfvars:
-    sops edit --input-type json --output-type json {{ tfdir }}/terraform.tfvars.json.sops
+    sops edit --input-type json --output-type json {{ tfdir }}/terraform.tfvars.sops.json
 
 # Destroy Terraform resources
 [confirm("Are you sure you want to destroy all resources?")]

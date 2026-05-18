@@ -1,5 +1,5 @@
 creation_rules:
-  - path_regex: .*terraform\.tfvars\.json(\.sops)?$
+  - path_regex: .*terraform\.tfvars\.sops\.json$
     gcp_kms: projects/rj-iplanrio-dia/locations/global/keyRings/terraform-k3s/cryptoKeys/sops-prod
     input_type: json
     output_type: json

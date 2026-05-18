@@ -10,5 +10,5 @@
 !.k3s/.gitkeep
 scripts/pyrightconfig.json
 terraform/terraform.tfvars.json
-!terraform/terraform.tfvars.json.sops
+!terraform/terraform.tfvars.sops.json
 /scripts/__pycache__
