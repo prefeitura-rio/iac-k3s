@@ -38,21 +38,11 @@ resource "helm_release" "prefect_worker" {
     worker = {
       apiConfig                 = "selfHostedServer"
       selfHostedServerApiConfig = { apiUrl = "${var.prefect_address}/api" }
-      autoscaling               = { enabled = false }
-      replicaCount              = 2
-      affinity = {
-        podAntiAffinity = {
-          requiredDuringSchedulingIgnoredDuringExecution = [{
-            topologyKey = "kubernetes.io/hostname"
-            labelSelector = {
-              matchLabels = { "app.kubernetes.io/name" = "prefect-worker" }
-            }
-          }]
-        }
-      }
+      autoscaling  = { enabled = false }
+      replicaCount = 1
       config = {
         workPool        = "k3s-pool"
-        limit           = 6
+        limit           = 12
         prefetchSeconds = 30
         baseJobTemplate = {
           configuration = templatefile("${path.module}/files/prefect-base-job-template.json", {
