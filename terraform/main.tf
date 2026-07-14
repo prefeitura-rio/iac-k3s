@@ -20,6 +20,35 @@ resource "incus_network" "k3s_network" {
   }
 }
 
+# k3s_network is a NATed Incus bridge local to this hypervisor -- its
+# 10.0.100.0/24 addresses aren't routable from the rest of the intranet, so
+# anything meant to be reached by other machines on the LAN (e.g. the JWKS
+# mirror's intranet Ingress) needs a forward from the host's own
+# LAN-routable interface into the VM running Traefik. Using
+# incus_network_forward here (rather than raw iptables) keeps this
+# declarative and reviewable alongside the rest of the cluster config.
+resource "incus_network_forward" "k3s_master_http" {
+  network        = incus_network.k3s_network.name
+  listen_address = var.host_lan_address
+
+  ports = [
+    {
+      description    = "HTTP (Traefik ingress, e.g. JWKS mirror)"
+      protocol       = "tcp"
+      listen_port    = "80"
+      target_port    = "80"
+      target_address = incus_instance.k3s_master.ipv4_address
+    },
+    {
+      description    = "HTTPS (Traefik ingress, e.g. JWKS mirror)"
+      protocol       = "tcp"
+      listen_port    = "443"
+      target_port    = "443"
+      target_address = incus_instance.k3s_master.ipv4_address
+    },
+  ]
+}
+
 resource "incus_profile" "k3s_profile" {
   name = "${var.cluster_name}-profile"
 
@@ -115,15 +144,16 @@ resource "random_password" "k3s_token" {
 }
 
 module "deployments" {
-  count            = var.kubeconfig_path != "" ? 1 : 0
-  depends_on       = [incus_instance.k3s_workers]
-  source           = "./deployments"
-  cloudsql_proxies = var.cloudsql_proxies
-  datametrica      = var.datametrica
-  github           = var.github
-  infisical        = var.infisical
-  k3s_master       = incus_instance.k3s_master
-  k3s_workers      = incus_instance.k3s_workers
-  prefect_address  = var.prefect_address
-  tailscale        = var.tailscale
+  count                       = var.kubeconfig_path != "" ? 1 : 0
+  depends_on                  = [incus_instance.k3s_workers]
+  source                      = "./deployments"
+  cloudsql_proxies            = var.cloudsql_proxies
+  datametrica                 = var.datametrica
+  github                      = var.github
+  infisical                   = var.infisical
+  jwks_mirror_public_hostname = var.jwks_mirror_public_hostname
+  k3s_master                  = incus_instance.k3s_master
+  k3s_workers                 = incus_instance.k3s_workers
+  prefect_address             = var.prefect_address
+  tailscale                   = var.tailscale
 }

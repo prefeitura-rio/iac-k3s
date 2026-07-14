@@ -213,3 +213,68 @@ resource "kubectl_manifest" "jwks_mirror_tailscale_ingress" {
     }
   })
 }
+
+# Non-tailnet intranet exposure (NOT internet-facing). This is for
+# on-prem/off-tailnet apps that need the JWKS endpoint but can't join the
+# tailnet -- it is reachable only within Prefeitura's own network, same as
+# everything else K3s's Traefik Ingress serves. JWKS is public key material
+# by design (RFC 7517 SS9.2 -- confidentiality only required for private/
+# symmetric keys), so there's no confidentiality requirement being relaxed
+# here; this is purely about reachability for internal consumers, not about
+# exposing anything to the public internet.
+#
+# TLS uses an internal-only CA (see cert-manager.tf) rather than Let's
+# Encrypt: Let's Encrypt's ACME validation (HTTP-01 or DNS-01) requires the
+# public internet to reach/resolve the domain, which is impossible here by
+# design. Consumers must trust the internal CA root -- see cert-manager.tf
+# for how to retrieve it.
+#
+# Prerequisite outside this repo's control: `var.jwks_mirror_public_hostname`
+# must have an internal DNS A/CNAME record pointing at this K3s cluster's
+# intranet ingress IP.
+resource "kubectl_manifest" "jwks_mirror_intranet_ingress" {
+  depends_on = [kubectl_manifest.internal_ca_issuer]
+  yaml_body = yamlencode({
+    apiVersion = "networking.k8s.io/v1"
+    kind       = "Ingress"
+
+    metadata = {
+      name      = "jwks-mirror-intranet"
+      namespace = kubernetes_namespace_v1.jwks_mirror.metadata[0].name
+      annotations = {
+        "cert-manager.io/cluster-issuer" = "internal-ca-issuer"
+      }
+    }
+
+    spec = {
+      ingressClassName = "traefik"
+      rules = [
+        {
+          host = var.jwks_mirror_public_hostname
+          http = {
+            paths = [
+              {
+                path     = "/"
+                pathType = "Prefix"
+                backend = {
+                  service = {
+                    name = kubernetes_service_v1.jwks_mirror.metadata[0].name
+                    port = {
+                      number = 8080
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+      tls = [
+        {
+          hosts      = [var.jwks_mirror_public_hostname]
+          secretName = "jwks-mirror-public-tls"
+        }
+      ]
+    }
+  })
+}

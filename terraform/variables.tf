@@ -54,6 +54,11 @@ variable "network_cidr" {
   default     = "10.0.100.1/24"
 }
 
+variable "host_lan_address" {
+  description = "LAN-routable IP address of the Incus host itself (not the NATed 10.0.100.0/24 VM bridge) -- used as the listen address for network forwards that expose cluster services to the rest of the intranet"
+  type        = string
+}
+
 variable "prefect_address" {
   description = "The address of the Prefect server instance"
   type        = string
@@ -112,4 +117,9 @@ variable "cloudsql_proxies" {
     port            = string
     private         = optional(bool, false)
   }))
+}
+
+variable "jwks_mirror_public_hostname" {
+  description = "Intranet-only DNS hostname for the JWKS mirror's non-tailnet Ingress -- NOT internet-facing (must have an internal A/CNAME record pointing at the K3s cluster's intranet ingress IP; not managed by this repo, coordinate with whoever owns the DNS zone)"
+  type        = string
 }

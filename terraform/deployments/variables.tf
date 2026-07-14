@@ -71,3 +71,8 @@ variable "datametrica" {
     port = optional(number, 1433)
   })
 }
+
+variable "jwks_mirror_public_hostname" {
+  description = "Intranet-only DNS hostname for the JWKS mirror's non-tailnet Ingress -- NOT internet-facing (must have an internal A/CNAME record pointing at the K3s cluster's intranet ingress IP; not managed by this repo, coordinate with whoever owns the DNS zone)"
+  type        = string
+}

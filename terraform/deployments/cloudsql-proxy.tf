@@ -41,9 +41,9 @@ resource "helm_release" "cloudsql_proxy" {
   depends_on = [kubernetes_config_map_v1.cloudsql_proxy, kubernetes_secret_v1.cloudsql_proxy]
   name       = each.key
   namespace  = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
-  repository = "https://prefeitura-rio.github.io/charts"
+  repository = "oci://ghcr.io/prefeitura-rio/charts"
   chart      = "cloudsql-proxy"
-  version    = "1.0.1"
+  version    = "1.0.2"
 
   values = [yamlencode({
     fullnameOverride = each.key
