@@ -6,15 +6,21 @@ repos:
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.99.4
     hooks:
-      - id: terraform_fmt
+      - id: terraform_tflint
         args:
-          - --args=-recursive
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
   - repo: local
     hooks:
+      - id: fmt
+        name: fmt
+        language: system
+        entry: prefrio fmt
+        files: \.tf$
+        pass_filenames: false
       - id: check-unencrypted-tfvars
         name: check-unencrypted-tfvars
         language: system
-        entry: just check-unencrypted-tfvars
+        entry: prefrio check-tfvars terraform/terraform\.tfvars\.json
         pass_filenames: false
         always_run: true
       - id: ruff-lint
