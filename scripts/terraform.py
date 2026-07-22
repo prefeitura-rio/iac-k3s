@@ -83,7 +83,7 @@ def terraform_run(command: Command, extra: list[str], tfdir: Path) -> None:
 
     try:
         sops_cmd = (
-            f"KUBECONFIG={{}} terraform -chdir={tfdir} {command}"
+            f"KUBECONFIG={{}} tofu -chdir={tfdir} {command}"
             f" -var-file={tfvars_path}"
             f" -var=kubeconfig_path={{}}"
             f" -var=incus_token=$TF_INCUS_TOKEN"
