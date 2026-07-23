@@ -13,11 +13,11 @@ default: apply
 
 [private]
 validate-tailscale:
-    python3 -m scripts.validate_tailscale
+    k3s validate-tailscale
 
 [private]
 ensure-incus force="":
-    python3 -m scripts.ensure_incus {{ if force != "" { "--force" } else { "" } }}
+    k3s ensure-incus {{ if force != "" { "--force" } else { "" } }}
 
 [private]
 ensure-init:
@@ -38,7 +38,7 @@ rotate-incus-token: (ensure-incus "force")
 
 # Bootstrap or rotate kubeconfig: fetch from cluster and encrypt
 rotate-kubeconfig: validate-tailscale ensure-incus
-    python3 -m scripts.ensure_kubeconfig
+    k3s ensure-kubeconfig
 
 # Initialize Terraform (forced)
 init:
@@ -54,11 +54,11 @@ validate: ensure-init
 
 # Apply Terraform changes
 apply: validate-tailscale ensure-init
-    python3 -m scripts.terraform apply
+    k3s apply
 
 # Import an existing resource into Terraform state
 import address id: validate-tailscale ensure-init
-    python3 -m scripts.terraform import '{{ address }}' '{{ id }}'
+    k3s import '{{ address }}' '{{ id }}'
 
 # Edit secrets
 edit-tfvars:
@@ -67,4 +67,4 @@ edit-tfvars:
 # Destroy Terraform resources
 [confirm("Are you sure you want to destroy all resources?")]
 destroy: validate-tailscale ensure-init
-    python3 -m scripts.terraform destroy
+    k3s destroy
