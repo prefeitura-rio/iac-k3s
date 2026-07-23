@@ -65,7 +65,7 @@ resource "incus_profile" "k3s_profile" {
     "security.syscalls.intercept.mount.fuse"    = "ext4=ext4,btrfs=btrfs"
     "linux.kernel_modules"                      = "ip_tables,ip6_tables,netlink_diag,nf_nat,overlay,br_netfilter,xt_conntrack,xt_MASQUERADE,iptable_nat,iptable_filter"
     "raw.lxc"                                   = <<-EOF
-      lxc.apparmor.profile=unconfined
+      lxc.apparmor.profile=lxc-container-default-with-nesting
       lxc.cap.drop=
       lxc.cgroup.devices.allow=a
       lxc.mount.auto=proc:rw sys:rw cgroup:rw
