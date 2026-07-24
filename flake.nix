@@ -51,7 +51,7 @@
               prefrio.packages.${system}.prefrio
               prefrio.packages.${system}.k3s
             ]
-            ++ (with pkgs; [ ansible tflint ])
+            ++ [ pkgs.ansible ]
             ++ pkgs.lib.optional pkgs.stdenv.isLinux pkgs.incus;
         };
       }
