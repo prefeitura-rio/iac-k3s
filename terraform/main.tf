@@ -20,13 +20,6 @@ resource "incus_network" "k3s_network" {
   }
 }
 
-# k3s_network is a NATed Incus bridge local to this hypervisor -- its
-# 10.0.100.0/24 addresses aren't routable from the rest of the intranet, so
-# anything meant to be reached by other machines on the LAN (e.g. the JWKS
-# mirror's intranet Ingress) needs a forward from the host's own
-# LAN-routable interface into the VM running Traefik. Using
-# incus_network_forward here (rather than raw iptables) keeps this
-# declarative and reviewable alongside the rest of the cluster config.
 resource "incus_network_forward" "k3s_master_http" {
   network        = incus_network.k3s_network.name
   listen_address = var.host_lan_address

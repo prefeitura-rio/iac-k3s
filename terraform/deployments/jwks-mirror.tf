@@ -93,8 +93,6 @@ resource "kubernetes_deployment_v1" "jwks_mirror" {
             mount_path = "/var/cache/nginx"
           }
 
-          # nginx needs to write its default PID file; without this the
-          # container fails to start as a non-root, read-only-friendly image.
           volume_mount {
             name       = "run"
             mount_path = "/var/run"
@@ -137,9 +135,6 @@ resource "kubernetes_deployment_v1" "jwks_mirror" {
           }
         }
 
-        # emptyDir is sufficient: this is a cache, not a source of truth. If
-        # a pod restarts, it just refetches from the public endpoint on the
-        # next request (or serves stale-on-error once re-populated).
         volume {
           name = "cache"
           empty_dir {}
@@ -214,24 +209,6 @@ resource "kubectl_manifest" "jwks_mirror_tailscale_ingress" {
   })
 }
 
-# Non-tailnet intranet exposure (NOT internet-facing). This is for
-# on-prem/off-tailnet apps that need the JWKS endpoint but can't join the
-# tailnet -- it is reachable only within Prefeitura's own network, same as
-# everything else K3s's Traefik Ingress serves. JWKS is public key material
-# by design (RFC 7517 SS9.2 -- confidentiality only required for private/
-# symmetric keys), so there's no confidentiality requirement being relaxed
-# here; this is purely about reachability for internal consumers, not about
-# exposing anything to the public internet.
-#
-# TLS uses an internal-only CA (see cert-manager.tf) rather than Let's
-# Encrypt: Let's Encrypt's ACME validation (HTTP-01 or DNS-01) requires the
-# public internet to reach/resolve the domain, which is impossible here by
-# design. Consumers must trust the internal CA root -- see cert-manager.tf
-# for how to retrieve it.
-#
-# Prerequisite outside this repo's control: `var.jwks_mirror_public_hostname`
-# must have an internal DNS A/CNAME record pointing at this K3s cluster's
-# intranet ingress IP.
 resource "kubectl_manifest" "jwks_mirror_intranet_ingress" {
   depends_on = [kubectl_manifest.internal_ca_issuer]
   yaml_body = yamlencode({
