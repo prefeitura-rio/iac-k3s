@@ -19,10 +19,7 @@
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-        };
+        pkgs = import nixpkgs { inherit system; };
         pre-commit = git-hooks.lib.${system}.run {
           src = ./.;
           hooks = {
@@ -59,8 +56,7 @@
               prefrio.packages.${system}.prefrio
               prefrio.packages.${system}.k3s
             ]
-            ++ [ pkgs.ansible ]
-            ++ pkgs.lib.optional pkgs.stdenv.isLinux pkgs.incus;
+            ++ [ pkgs.ansible ];
         };
       }
     );

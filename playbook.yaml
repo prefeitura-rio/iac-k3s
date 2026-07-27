@@ -1,75 +1,52 @@
 ---
-- name: K3S Infrastructure Setup
-  hosts: server
+- name: K3s prerequisites
+  hosts: k3s
+  gather_facts: true
   become: true
-
+  vars_files:
+    - variables.yaml
+  pre_tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 120
+  roles:
+    - role: k3s.orchestration.prereq
+- name: K3s server
+  hosts: k3s_server
+  gather_facts: false
+  become: true
+  vars_files:
+    - variables.yaml
+  vars:
+    api_endpoint: "{{ hostvars['k3s_control_plane']['ansible_host'] }}"
+  roles:
+    - role: k3s.orchestration.k3s_server
+- name: K3s agents
+  hosts: k3s_workers
+  gather_facts: false
+  become: true
+  vars_files:
+    - variables.yaml
+  vars:
+    api_endpoint: '{{ hostvars[''k3s_control_plane''][''ansible_host''] }}'
+  roles:
+    - role: k3s.orchestration.k3s_agent
+- name: Verify cluster
+  hosts: k3s_server
+  gather_facts: false
+  become: true
+  vars_files:
+    - variables.yaml
   tasks:
-    - name: Update package cache
-      ansible.builtin.apt:
-        update_cache: true
-        cache_valid_time: 3600
-
-    - name: Install required packages for Incus
-      ansible.builtin.apt:
-        update_cache: true
-        install_recommends: true
-        name: incus
-        state: present
-
-    - name: Create incus-admin group if it doesn't exist
-      ansible.builtin.group:
-        name: incus-admin
-        state: present
-
-    - name: Add user to incus-admin group
-      ansible.builtin.user:
-        name: "{{ ansible_user }}"
-        groups: incus-admin
-        append: yes
-
-    - name: Create Incus initialization service
-      ansible.builtin.copy:
-        content: |
-          [Unit]
-          Description=Initialize Incus
-          After=incus.service
-          Wants=incus.service
-
-          [Service]
-          Type=oneshot
-          ExecStart=/usr/bin/incus admin init --minimal
-          User={{ ansible_user }}
-          RemainAfterExit=yes
-
-          [Install]
-          WantedBy=multi-user.target
-        dest: /etc/systemd/system/incus-init.service
-        mode: "0644"
-
-    - name: Reload systemd daemon
-      ansible.builtin.systemd_service:
-        daemon_reload: yes
-
-    - name: Enable and start Incus initialization service
-      ansible.builtin.systemd_service:
-        name: incus-init
-        state: started
-        enabled: yes
-
-    - name: Wait for Incus to be ready
-      ansible.builtin.wait_for:
-        port: 8443
-        host: localhost
-        delay: 5
-        timeout: 30
-
-    - name: Check if Incus is initialized
-      ansible.builtin.shell: incus info
-      become_user: "{{ ansible_user }}"
-      register: incus_status
-      failed_when: false
-
-    - name: Initialize Incus if needed
-      ansible.builtin.shell: incus admin init --auto
-      become_user: "{{ ansible_user }}"
-      when: incus_status.rc != 0
+    - name: Wait for all nodes to reach Ready state
+      ansible.builtin.command:
+        cmd: kubectl wait --for=condition=Ready nodes --all --timeout=300s
+      changed_when: false
+    - name: Show cluster nodes
+      ansible.builtin.command:
+        cmd: kubectl get nodes -o wide
+      changed_when: false
+      register: nodes_output
+    - name: Print cluster nodes
+      ansible.builtin.debug:
+        msg: '{{ nodes_output.stdout_lines }}'

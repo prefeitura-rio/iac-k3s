@@ -1,30 +1,22 @@
 terraform {
-  required_version = ">= 1.12.0"
+  required_version = "~> 1.12"
 
   required_providers {
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = ">= 2.38.0"
+      version = "~> 2.38"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = ">= 3.0.2"
+      version = "~> 3.0"
     }
     kubectl = {
       source  = "alekc/kubectl"
-      version = ">= 2.1.3"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = ">= 3.2.4"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = ">= 2.5.3"
+      version = "~> 2.1"
     }
     time = {
       source  = "hashicorp/time"
-      version = ">= 0.12.1"
+      version = "~> 0.12"
     }
   }
 }

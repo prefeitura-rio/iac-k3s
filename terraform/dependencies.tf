@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.12.0"
+  required_version = "~> 1.12"
 
   backend "gcs" {
     bucket = "iplanrio-terraform-state"
@@ -9,35 +9,19 @@ terraform {
   required_providers {
     helm = {
       source  = "hashicorp/helm"
-      version = ">= 3.0.2"
+      version = "~> 3.0"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = ">= 2.38.0"
+      version = "~> 2.38"
     }
     kubectl = {
       source  = "alekc/kubectl"
-      version = ">= 2.1.3"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = ">= 3.7.2"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = ">= 3.2.4"
-    }
-    incus = {
-      source  = "lxc/incus"
-      version = ">= 1.0.0"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = ">= 2.5.3"
+      version = "~> 2.1"
     }
     time = {
       source  = "hashicorp/time"
-      version = ">= 0.12.1"
+      version = "~> 0.12"
     }
   }
 }

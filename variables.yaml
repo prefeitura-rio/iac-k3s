@@ -1,0 +1,35 @@
+---
+k3s_version: v1.36.2+k3s1
+server_group: k3s_server
+agent_group: k3s_workers
+server_config_yaml: |
+  write-kubeconfig-mode: "600"
+  tls-san:
+    - k3s_control_plane
+  node-taint:
+    - "node-role.kubernetes.io/control-plane:NoSchedule"
+  disable:
+    - servicelb
+  kube-apiserver-arg:
+    - service-account-max-token-expiration=30m
+  kubelet-arg:
+    - image-gc-high-threshold=75
+    - image-gc-low-threshold=60
+    - container-log-max-size=10Mi
+    - container-log-max-files=3
+    - eviction-hard=memory.available<100Mi,nodefs.available<1Gi,imagefs.available<1Gi
+    - eviction-soft=memory.available<200Mi,nodefs.available<1.5Gi
+    - eviction-soft-grace-period=memory.available=2m,nodefs.available=2m
+    - eviction-max-pod-grace-period=60
+    - volume-stats-agg-period=1m
+agent_config_yaml: |
+  kubelet-arg:
+    - image-gc-high-threshold=75
+    - image-gc-low-threshold=60
+    - container-log-max-size=10Mi
+    - container-log-max-files=3
+    - eviction-hard=memory.available<100Mi,nodefs.available<1Gi,imagefs.available<1Gi
+    - eviction-soft=memory.available<200Mi,nodefs.available<1.5Gi
+    - eviction-soft-grace-period=memory.available=2m,nodefs.available=2m
+    - eviction-max-pod-grace-period=60
+    - volume-stats-agg-period=1m

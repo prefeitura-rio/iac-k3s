@@ -11,54 +11,6 @@ variable "kubeconfig_path" {
   default     = ""
 }
 
-variable "incus_token" {
-  description = "Incus authentication token (decrypted at runtime by justfile)"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "worker_count" {
-  description = "Number of K3s worker nodes"
-  type        = number
-  default     = 2
-}
-
-variable "container_image" {
-  description = "Container image to use for instances"
-  type        = string
-  default     = "images:debian/13/cloud"
-}
-
-variable "cpu_limit" {
-  description = "CPU limit for containers"
-  type        = string
-  default     = "5"
-}
-
-variable "memory_limit" {
-  description = "Memory limit for containers"
-  type        = string
-  default     = "20GB"
-}
-
-variable "disk_size" {
-  description = "Disk size for containers"
-  type        = string
-  default     = "120GB"
-}
-
-variable "network_cidr" {
-  description = "Network CIDR for the cluster"
-  type        = string
-  default     = "10.0.100.1/24"
-}
-
-variable "host_lan_address" {
-  description = "LAN-routable IP address of the Incus host itself (not the NATed 10.0.100.0/24 VM bridge) -- used as the listen address for network forwards that expose cluster services to the rest of the intranet"
-  type        = string
-}
-
 variable "prefect_address" {
   description = "The address of the Prefect server instance"
   type        = string
@@ -74,11 +26,18 @@ variable "github" {
   })
 }
 
+variable "nodes" {
+  description = "K3s cluster nodes"
+  type = object({
+    control_plane = object({ name = string, ipv4_address = string })
+    workers       = list(object({ name = string, ipv4_address = string }))
+  })
+}
+
 variable "tailscale" {
   description = "Tailscale configuration"
   sensitive   = true
   type = object({
-    authkey = string
     domain  = string
     suffix  = string
     tailnet = string

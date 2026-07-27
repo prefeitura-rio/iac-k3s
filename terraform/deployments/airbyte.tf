@@ -14,56 +14,56 @@ resource "helm_release" "airbyte" {
       auth       = { enabled = false }
     }
     server = {
-      nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" }
+      nodeSelector = { "kubernetes.io/hostname" = var.k3s_workers[1].name }
       resources = {
         requests = { cpu = "500m", memory = "2Gi" }
         limits   = { cpu = "1000m", memory = "4Gi" }
       }
     }
     temporal = {
-      nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" }
+      nodeSelector = { "kubernetes.io/hostname" = var.k3s_workers[1].name }
       resources = {
         requests = { cpu = "300m", memory = "1Gi" }
         limits   = { cpu = "1000m", memory = "2Gi" }
       }
     }
     workloadLauncher = {
-      nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" }
+      nodeSelector = { "kubernetes.io/hostname" = var.k3s_workers[1].name }
       resources = {
         requests = { cpu = "500m", memory = "2Gi" }
         limits   = { cpu = "2000m", memory = "4Gi" }
       }
     }
     podSweeper = {
-      nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" }
+      nodeSelector = { "kubernetes.io/hostname" = var.k3s_workers[1].name }
       resources = {
         requests = { cpu = "50m", memory = "128Mi" }
         limits   = { cpu = "200m", memory = "256Mi" }
       }
     }
     metrics = {
-      nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" }
+      nodeSelector = { "kubernetes.io/hostname" = var.k3s_workers[1].name }
       resources = {
         requests = { cpu = "50m", memory = "128Mi" }
         limits   = { cpu = "200m", memory = "512Mi" }
       }
     }
     cron = {
-      nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" }
+      nodeSelector = { "kubernetes.io/hostname" = var.k3s_workers[1].name }
       resources = {
         requests = { cpu = "50m", memory = "128Mi" }
         limits   = { cpu = "800m", memory = "1Gi" }
       }
     }
     workloadApiServer = {
-      nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" }
+      nodeSelector = { "kubernetes.io/hostname" = var.k3s_workers[1].name }
       resources = {
         requests = { cpu = "300m", memory = "1Gi" }
         limits   = { cpu = "1000m", memory = "2Gi" }
       }
     }
-    airbyteBootloader      = { nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" } }
-    connectorBuilderServer = { nodeSelector = { "kubernetes.io/hostname" = "k3s-worker-2" } }
+    airbyteBootloader      = { nodeSelector = { "kubernetes.io/hostname" = var.k3s_workers[1].name } }
+    connectorBuilderServer = { nodeSelector = { "kubernetes.io/hostname" = var.k3s_workers[1].name } }
   })]
 }
 

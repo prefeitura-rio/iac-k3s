@@ -16,10 +16,6 @@ validate-tailscale:
     k3s validate-tailscale
 
 [private]
-ensure-incus force="":
-    k3s ensure-incus {{ if force != "" { "--force" } else { "" } }}
-
-[private]
 ensure-init:
     prefrio ensure-init
 
@@ -28,16 +24,15 @@ run *args:
     sops exec-file --no-fifo {{ sops_dir }}/kubeconfig.sops 'KUBECONFIG={} {{ args }}'
 
 # Run Ansible playbook for host configuration
-ansible: validate-tailscale
+ansible:
+    echo -e "{{ info }} Installing Ansible collections..."
+    ansible-galaxy collection install -r requirements.yaml
     echo -e "{{ info }} Running Ansible playbook..."
     ansible-playbook playbook.yaml
     echo -e "{{ success }} Ansible playbook completed"
 
-# Rotate Incus authentication token (revoke + regenerate + re-encrypt)
-rotate-incus-token: (ensure-incus "force")
-
 # Bootstrap or rotate kubeconfig: fetch from cluster and encrypt
-rotate-kubeconfig: validate-tailscale ensure-incus
+rotate-kubeconfig: validate-tailscale
     k3s ensure-kubeconfig
 
 # Initialize Terraform (forced)

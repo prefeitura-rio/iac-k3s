@@ -27,6 +27,10 @@ resource "helm_release" "tailscale_operator" {
     {
       name  = "oauth.clientSecret"
       value = var.tailscale.oauth.client_secret
+    },
+    {
+      name  = "apiServerProxyConfig.mode"
+      value = "true"
     }
   ]
 }
