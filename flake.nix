@@ -29,6 +29,14 @@
             ripsecrets.enable       = true;
             terraform-format.enable = true;
             tflint.enable           = true;
+            tfsec = {
+              enable         = true;
+              name           = "tfsec";
+              entry          = "${pkgs.tfsec}/bin/tfsec";
+              files          = "\\.tf$";
+              language       = "system";
+              pass_filenames = false;
+            };
             check-tfvars = {
               enable = true;
               name   = "check-unencrypted-tfvars";
