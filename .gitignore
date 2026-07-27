@@ -12,3 +12,4 @@ scripts/pyrightconfig.json
 terraform/terraform.tfvars.json
 !terraform/terraform.tfvars.sops.json
 /scripts/__pycache__
+.pre-commit-config.yaml
