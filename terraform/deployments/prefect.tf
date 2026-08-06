@@ -38,8 +38,8 @@ resource "helm_release" "prefect_worker" {
     worker = {
       apiConfig                 = "selfHostedServer"
       selfHostedServerApiConfig = { apiUrl = "${var.prefect_address}/api" }
-      autoscaling  = { enabled = false }
-      replicaCount = 1
+      autoscaling               = { enabled = false }
+      replicaCount              = 1
       config = {
         workPool        = "k3s-pool"
         limit           = 12
