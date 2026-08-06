@@ -1,7 +1,13 @@
-variable "cluster_name" {
-  description = "Name of the K3s cluster"
-  type        = string
-  default     = "k3s"
+variable "k3s" {
+  description = "K3s cluster configuration"
+  type = object({
+    cluster_name           = optional(string, "k3s")
+    control_plane_hostname = optional(string, "srv001070")
+    nodes = object({
+      control_plane = object({ ipv4_address = string })
+      workers       = list(object({ name = string, ipv4_address = string }))
+    })
+  })
 }
 
 variable "kubeconfig_path" {
@@ -23,14 +29,6 @@ variable "github" {
     username = string
     password = string
     email    = string
-  })
-}
-
-variable "nodes" {
-  description = "K3s cluster nodes"
-  type = object({
-    control_plane = object({ name = string, ipv4_address = string })
-    workers       = list(object({ name = string, ipv4_address = string }))
   })
 }
 
@@ -79,6 +77,6 @@ variable "cloudsql_proxies" {
 }
 
 variable "jwks_mirror_public_hostname" {
-  description = "Intranet-only DNS hostname for the JWKS mirror's non-tailnet Ingress -- NOT internet-facing (must have an internal A/CNAME record pointing at the K3s cluster's intranet ingress IP; not managed by this repo, coordinate with whoever owns the DNS zone)"
+  description = "Intranet DNS hostname for the JWKS mirror Traefik Ingress (not internet-facing)"
   type        = string
 }

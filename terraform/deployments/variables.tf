@@ -1,17 +1,13 @@
-variable "k3s_master" {
-  description = "K3s master instance"
+variable "k3s" {
+  description = "K3s cluster configuration"
   type = object({
-    name         = string
-    ipv4_address = string
+    cluster_name           = optional(string, "k3s")
+    control_plane_hostname = optional(string, "srv001070")
+    nodes = object({
+      control_plane = object({ ipv4_address = string })
+      workers       = list(object({ name = string, ipv4_address = string }))
+    })
   })
-}
-
-variable "k3s_workers" {
-  description = "K3s worker instances"
-  type = list(object({
-    name         = string
-    ipv4_address = string
-  }))
 }
 
 variable "prefect_address" {

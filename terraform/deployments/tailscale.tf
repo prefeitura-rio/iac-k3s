@@ -126,8 +126,8 @@ resource "kubectl_manifest" "coredns_config" {
         import /etc/coredns/custom/*.server
       EOF
       NodeHosts = <<-EOF
-${var.k3s_master.ipv4_address} ${var.k3s_master.name}
-%{for worker in var.k3s_workers~}
+${var.k3s.nodes.control_plane.ipv4_address} ${var.k3s.control_plane_hostname}
+%{for worker in var.k3s.nodes.workers~}
 ${worker.ipv4_address} ${worker.name}
 %{endfor~}
 EOF
