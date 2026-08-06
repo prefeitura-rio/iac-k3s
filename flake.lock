@@ -89,11 +89,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1784796856,
-        "narHash": "sha256-wWFrV5/Qbm+lyt5x20E/bSbfJiGKMo4RCxZV8cl/WZI=",
+        "lastModified": 1785967620,
+        "narHash": "sha256-IItrdb7Puk05RqOBWZYFC5X6Wl1sJmCfh5MWVHw5iMM=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "e2587caef70cea85dd97d7daab492899902dbf5d",
+        "rev": "b7c2ada94fe99c15b0dbcf4d11fd7850b957a436",
         "type": "github"
       },
       "original": {
@@ -142,11 +142,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1785180157,
-        "narHash": "sha256-CLfiXL5lmkcQXJIarR1upWlujQpNu56HPhUWDC+DV1M=",
+        "lastModified": 1785428252,
+        "narHash": "sha256-L6SheOG4vG9onQUAAJq0CFOgVOTaYSlBBGdcX58JWPk=",
         "owner": "prefeitura-rio",
         "repo": "flakes",
-        "rev": "032c3f6c5dbfe4a9e6f2087bb26c37174cf33d5a",
+        "rev": "b1b54ff6818a9e1ebc84dfcbe0c81e7535a1f0f2",
         "type": "github"
       },
       "original": {

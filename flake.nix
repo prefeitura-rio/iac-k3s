@@ -2,10 +2,10 @@
   description = "K3s infrastructure dev environment";
 
   inputs = {
-    nixpkgs.url     = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    git-hooks.url   = "github:cachix/git-hooks.nix";
-    prefrio.url     = "github:prefeitura-rio/flakes";
+    git-hooks.url = "github:cachix/git-hooks.nix";
+    prefrio.url = "github:prefeitura-rio/flakes";
   };
 
   outputs =
@@ -23,24 +23,24 @@
         pre-commit = git-hooks.lib.${system}.run {
           src = ./.;
           hooks = {
-            ripsecrets.enable       = true;
+            ripsecrets.enable = true;
             terraform-format.enable = true;
-            tflint.enable           = true;
+            tflint.enable = true;
             tfsec = {
-              enable         = true;
-              name           = "tfsec";
-              entry          = "${pkgs.tfsec}/bin/tfsec";
-              files          = "\\.tf$";
-              language       = "system";
+              enable = true;
+              name = "tfsec";
+              entry = "${pkgs.tfsec}/bin/tfsec";
+              files = "\\.tf$";
+              language = "system";
               pass_filenames = false;
             };
             check-tfvars = {
               enable = true;
-              name   = "check-unencrypted-tfvars";
-              entry  = "${prefrio.packages.${system}.prefrio}/bin/prefrio check-tfvars terraform\\.tfvars\\.json";
-              language       = "system";
+              name = "check-unencrypted-tfvars";
+              entry = "${prefrio.packages.${system}.prefrio}/bin/prefrio check-tfvars terraform\\.tfvars\\.json";
+              language = "system";
               pass_filenames = false;
-              always_run     = true;
+              always_run = true;
             };
           };
         };
@@ -50,13 +50,15 @@
 
         devShells.default = pkgs.mkShell {
           inherit (pre-commit) shellHook;
-          packages =
-            [
-              prefrio.packages.${system}.deps
-              prefrio.packages.${system}.prefrio
-              prefrio.packages.${system}.k3s
-            ]
-            ++ [ pkgs.ansible ];
+          packages = [
+            prefrio.packages.${system}.deps
+            prefrio.packages.${system}.prefrio
+            prefrio.packages.${system}.k3s
+          ]
+          ++ (with pkgs; [
+            ansible
+            ansible-lint
+          ]);
         };
       }
     );
