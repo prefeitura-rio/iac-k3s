@@ -1,186 +1,96 @@
-resource "kubernetes_namespace_v1" "jwks_mirror" {
-  metadata {
-    name = "jwks-mirror"
-  }
-}
+resource "helm_release" "jwks_mirror" {
+  name             = "jwks-mirror"
+  repository       = "oci://registry-1.docker.io/cloudpirates"
+  chart            = "nginx"
+  version          = "0.16.1"
+  namespace        = "jwks-mirror"
+  create_namespace = true
 
-resource "kubernetes_config_map_v1" "jwks_mirror_nginx" {
-  metadata {
-    name      = "jwks-mirror-nginx"
-    namespace = kubernetes_namespace_v1.jwks_mirror.metadata[0].name
-  }
+  values = [yamlencode({
+    fullnameOverride = "jwks-mirror"
+    replicaCount     = 1
 
-  data = {
-    "default.conf" = <<-EOF
-      proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=jwks_cache:1m max_size=10m inactive=30d use_temp_path=off;
+    containerPorts = [{
+      name          = "http"
+      containerPort = 8080
+      protocol      = "TCP"
+    }]
 
-      server {
-        listen 8080;
+    service = {
+      type = "ClusterIP"
+      ports = [{
+        port       = 8080
+        targetPort = "http"
+        protocol   = "TCP"
+        name       = "http"
+      }]
+    }
 
-        location = /realms/rio/protocol/openid-connect/certs {
-          proxy_pass https://id-staging.rio.gov.br/realms/rio/protocol/openid-connect/certs;
-          proxy_ssl_server_name on;
-          proxy_set_header Host id-staging.rio.gov.br;
+    serverConfig = file("${path.module}/files/jwks-mirror-nginx.conf")
 
-          proxy_cache jwks_cache;
-          proxy_cache_key $uri;
-          proxy_cache_valid 200 1h;
+    livenessProbe = {
+      enabled             = true
+      type                = "httpGet"
+      path                = "/healthz"
+      initialDelaySeconds = 5
+      periodSeconds       = 10
+      timeoutSeconds      = 5
+      failureThreshold    = 3
+      successThreshold    = 1
+    }
 
-          # Serve the last known-good response (even if stale) when the
-          # public endpoint is unreachable or erroring, instead of failing
-          # the request outright. This is the whole point of the mirror.
-          proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504;
-          proxy_cache_background_update on;
-          proxy_cache_lock on;
+    readinessProbe = {
+      enabled             = true
+      type                = "httpGet"
+      path                = "/healthz"
+      initialDelaySeconds = 5
+      periodSeconds       = 5
+      timeoutSeconds      = 5
+      failureThreshold    = 3
+      successThreshold    = 1
+    }
 
-          add_header X-Cache-Status $upstream_cache_status always;
-        }
+    resources = {
+      requests = { cpu = "50m", memory = "32Mi" }
+      limits   = { cpu = "200m", memory = "128Mi" }
+    }
 
-        location = /healthz {
-          return 200 "ok\n";
-          add_header Content-Type text/plain;
-        }
+    extraVolumes = [
+      { name = "cache", persistentVolumeClaim = { claimName = "jwks-mirror-cache" } },
+      { name = "run", emptyDir = {} }
+    ]
+
+    extraVolumeMounts = [
+      { name = "cache", mountPath = "/var/cache/nginx" },
+      { name = "run", mountPath = "/var/run" }
+    ]
+
+    extraObjects = [{
+      apiVersion = "v1"
+      kind       = "PersistentVolumeClaim"
+      metadata = {
+        name      = "jwks-mirror-cache"
+        namespace = "jwks-mirror"
       }
-    EOF
-  }
-}
-
-resource "kubernetes_deployment_v1" "jwks_mirror" {
-  metadata {
-    name      = "jwks-mirror"
-    namespace = kubernetes_namespace_v1.jwks_mirror.metadata[0].name
-    labels = {
-      app = "jwks-mirror"
-    }
-  }
-
-  spec {
-    replicas = 2
-
-    selector {
-      match_labels = {
-        app = "jwks-mirror"
+      spec = {
+        accessModes      = ["ReadWriteOnce"]
+        storageClassName = "local-path"
+        resources        = { requests = { storage = "500Mi" } }
       }
-    }
-
-    template {
-      metadata {
-        labels = {
-          app = "jwks-mirror"
-        }
-      }
-
-      spec {
-        container {
-          name  = "nginx"
-          image = "nginx:1.27-alpine"
-
-          port {
-            name           = "http"
-            container_port = 8080
-            protocol       = "TCP"
-          }
-
-          volume_mount {
-            name       = "config"
-            mount_path = "/etc/nginx/conf.d/default.conf"
-            sub_path   = "default.conf"
-            read_only  = true
-          }
-
-          volume_mount {
-            name       = "cache"
-            mount_path = "/var/cache/nginx"
-          }
-
-          volume_mount {
-            name       = "run"
-            mount_path = "/var/run"
-          }
-
-          resources {
-            requests = {
-              cpu    = "50m"
-              memory = "32Mi"
-            }
-            limits = {
-              cpu    = "200m"
-              memory = "128Mi"
-            }
-          }
-
-          liveness_probe {
-            http_get {
-              path = "/healthz"
-              port = 8080
-            }
-            initial_delay_seconds = 5
-            period_seconds        = 10
-          }
-
-          readiness_probe {
-            http_get {
-              path = "/healthz"
-              port = 8080
-            }
-            initial_delay_seconds = 5
-            period_seconds        = 5
-          }
-        }
-
-        volume {
-          name = "config"
-          config_map {
-            name = kubernetes_config_map_v1.jwks_mirror_nginx.metadata[0].name
-          }
-        }
-
-        volume {
-          name = "cache"
-          empty_dir {}
-        }
-
-        volume {
-          name = "run"
-          empty_dir {}
-        }
-      }
-    }
-  }
-}
-
-resource "kubernetes_service_v1" "jwks_mirror" {
-  metadata {
-    name      = "jwks-mirror"
-    namespace = kubernetes_namespace_v1.jwks_mirror.metadata[0].name
-    labels = {
-      app = "jwks-mirror"
-    }
-  }
-
-  spec {
-    selector = {
-      app = "jwks-mirror"
-    }
-
-    port {
-      name        = "http"
-      port        = 8080
-      target_port = 8080
-      protocol    = "TCP"
-    }
-  }
+    }]
+  })]
 }
 
 resource "kubectl_manifest" "jwks_mirror_tailscale_ingress" {
-  depends_on = [helm_release.tailscale_operator]
+  depends_on = [helm_release.tailscale_operator, helm_release.jwks_mirror]
+
   yaml_body = yamlencode({
     apiVersion = "networking.k8s.io/v1"
     kind       = "Ingress"
 
     metadata = {
       name      = "jwks-mirror"
-      namespace = kubernetes_namespace_v1.jwks_mirror.metadata[0].name
+      namespace = "jwks-mirror"
       annotations = {
         "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix},tag:jwks-mirror"
         "tailscale.com/hostname" = "jwks-mirror"
@@ -191,67 +101,37 @@ resource "kubectl_manifest" "jwks_mirror_tailscale_ingress" {
       ingressClassName = "tailscale"
       defaultBackend = {
         service = {
-          name = kubernetes_service_v1.jwks_mirror.metadata[0].name
-          port = {
-            number = 8080
-          }
+          name = "jwks-mirror"
+          port = { number = 8080 }
         }
       }
-
-      tls = [
-        {
-          hosts = [
-            "jwks-mirror.${var.tailscale.domain}"
-          ]
-        }
-      ]
+      tls = [{ hosts = ["jwks-mirror.${var.tailscale.domain}"] }]
     }
   })
 }
 
-resource "kubectl_manifest" "jwks_mirror_intranet_ingress" {
-  depends_on = [kubectl_manifest.internal_ca_issuer]
+resource "kubectl_manifest" "jwks_mirror_intranet_httproute" {
+  depends_on = [kubectl_manifest.intranet_gateway, helm_release.jwks_mirror]
+
   yaml_body = yamlencode({
-    apiVersion = "networking.k8s.io/v1"
-    kind       = "Ingress"
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
 
     metadata = {
       name      = "jwks-mirror-intranet"
-      namespace = kubernetes_namespace_v1.jwks_mirror.metadata[0].name
-      annotations = {
-        "cert-manager.io/cluster-issuer" = "internal-ca-issuer"
-      }
+      namespace = "jwks-mirror"
     }
 
     spec = {
-      ingressClassName = "traefik"
-      rules = [
-        {
-          host = var.jwks_mirror_public_hostname
-          http = {
-            paths = [
-              {
-                path     = "/"
-                pathType = "Prefix"
-                backend = {
-                  service = {
-                    name = kubernetes_service_v1.jwks_mirror.metadata[0].name
-                    port = {
-                      number = 8080
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ]
-      tls = [
-        {
-          hosts      = [var.jwks_mirror_public_hostname]
-          secretName = "jwks-mirror-public-tls"
-        }
-      ]
+      parentRefs = [{
+        name        = "intranet"
+        namespace   = helm_release.nginx_gateway_fabric.namespace
+        sectionName = "https"
+      }]
+      hostnames = [var.jwks_mirror_public_hostname]
+      rules = [{
+        backendRefs = [{ name = "jwks-mirror", port = 8080 }]
+      }]
     }
   })
 }
