@@ -47,8 +47,23 @@
         "/signoz/",
         "/prefect/",
         "/airbyte/",
-        "/infisical/"
+        "/secrets-operator/",
+        "/system-upgrade-controller/",
+        "/kured/",
+        "/gateway-api-crds/",
+        "/nginx-gateway-fabric/"
       ]
+    },
+    {
+      "description": "Low-risk cluster tooling — automerge patch and minor",
+      "matchPackageNames": [
+        "/eraser/",
+        "/kube-cleanup-operator/",
+        "/helm-release-pruner/"
+      ],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "platformAutomerge": true
     },
     {
       "description": "Terraform providers - separate major releases",
@@ -67,6 +82,22 @@
   "hostRules": [
     {
       "matchHost": "charts.*.io",
+      "timeout": 20000
+    },
+    {
+      "matchHost": "charts.lwolf.org",
+      "timeout": 20000
+    },
+    {
+      "matchHost": "charts.rancher.io",
+      "timeout": 20000
+    },
+    {
+      "matchHost": "wiremind.github.io",
+      "timeout": 20000
+    },
+    {
+      "matchHost": "kubereboot.github.io",
       "timeout": 20000
     },
     {
