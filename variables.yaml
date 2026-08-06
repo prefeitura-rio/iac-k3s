@@ -1,6 +1,6 @@
 ---
 k3s_version: v1.36.2+k3s1
-server_group: k3s_server
+server_group: k3s_control_plane
 agent_group: k3s_workers
 server_config_yaml: |
   write-kubeconfig-mode: "600"
@@ -10,6 +10,7 @@ server_config_yaml: |
     - "node-role.kubernetes.io/control-plane:NoSchedule"
   disable:
     - servicelb
+    - traefik
   kube-apiserver-arg:
     - service-account-max-token-expiration=30m
   kubelet-arg:
