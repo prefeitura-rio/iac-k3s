@@ -10,6 +10,10 @@ resource "helm_release" "cert_manager" {
     {
       name  = "crds.enabled"
       value = "true"
+    },
+    {
+      name  = "extraArgs[0]"
+      value = "--enable-gateway-api"
     }
   ]
 }
