@@ -70,7 +70,7 @@ resource "helm_release" "helm_release_pruner" {
   name        = "helm-release-pruner"
   repository  = "https://charts.fairwinds.com/stable"
   chart       = "helm-release-pruner"
-  version     = "4.0.3"
+  version     = "4.1.1"
   max_history = 3
   namespace   = "kube-system"
 
@@ -86,36 +86,6 @@ resource "helm_release" "helm_release_pruner" {
     resources = {
       requests = { cpu = "10m", memory = "32Mi" }
       limits   = { memory = "256Mi" }
-    }
-  })]
-}
-
-resource "helm_release" "eraser" {
-  name             = "eraser"
-  repository       = "https://eraser-dev.github.io/eraser/charts"
-  chart            = "eraser"
-  version          = "1.4.1"
-  max_history      = 3
-  namespace        = "eraser-system"
-  create_namespace = true
-
-  values = [yamlencode({
-    config         = { inCluster = true }
-    serviceAccount = { create = true }
-    clusterRoleBinding = {
-      create          = true
-      clusterRoleName = "cluster-admin"
-    }
-    deploy = {
-      resources = {
-        requests = { cpu = "10m", memory = "32Mi" }
-        limits   = { memory = "128Mi" }
-      }
-    }
-    runtimeConfig = {
-      components = {
-        scanner = { enabled = false }
-      }
     }
   })]
 }

@@ -1,5 +1,5 @@
 locals {
-  nameserver_ip = try(data.kubernetes_resource.tailscale_dnsconfig.object.status.nameserver.ip, "100.100.100.100")
+  nameserver_ip = "100.100.100.100"
 }
 
 resource "kubernetes_namespace_v1" "tailscale" {
@@ -72,22 +72,8 @@ resource "kubectl_manifest" "tailscale_egress_proxyclass" {
   })
 }
 
-resource "time_sleep" "wait_for_dnsconfig" {
-  depends_on      = [kubectl_manifest.tailscale_dnsconfig]
-  create_duration = "60s"
-}
-
-data "kubernetes_resource" "tailscale_dnsconfig" {
-  api_version = "tailscale.com/v1alpha1"
-  kind        = "DNSConfig"
-  metadata {
-    name = "ts-dns"
-  }
-  depends_on = [time_sleep.wait_for_dnsconfig]
-}
-
 resource "kubectl_manifest" "coredns_config" {
-  depends_on = [data.kubernetes_resource.tailscale_dnsconfig]
+  depends_on = [kubectl_manifest.tailscale_dnsconfig]
   yaml_body = yamlencode({
     apiVersion = "v1"
     kind       = "ConfigMap"

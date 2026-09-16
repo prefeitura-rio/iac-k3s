@@ -1,23 +1,19 @@
 set quiet
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-info    := '\033[36m[>]\033[0m'
+info := '\033[36m[>]\033[0m'
 success := '\033[32m[ok]\033[0m'
-tfdir    := env("TF_DIR", ".")
+tfdir := env("TF_DIR", ".")
 sops_dir := env("K3S_SOPS_DIR", ".k3s")
 
 export TF_BACKEND_CONFIG := "bucket=iplanrio-terraform-state"
-export TF_SOPS_FILE      := tfdir + "/terraform.tfvars.sops.json"
+export TF_SOPS_FILE := tfdir + "/terraform.tfvars.sops.json"
 
 default: apply
 
 [private]
 validate-tailscale:
     k3s validate-tailscale
-
-[private]
-ensure-init:
-    prefrio ensure-init
 
 # Run any command with KUBECONFIG injected from kubeconfig.sops
 run *args:
@@ -44,15 +40,15 @@ fmt:
     prefrio fmt
 
 # Validate Terraform configuration
-validate: ensure-init
+validate:
     prefrio validate
 
 # Apply Terraform changes
-apply: validate-tailscale ensure-init
+apply: validate-tailscale
     k3s apply
 
 # Import an existing resource into Terraform state
-import address id: validate-tailscale ensure-init
+import address id: validate-tailscale
     k3s import '{{ address }}' '{{ id }}'
 
 # Edit secrets
@@ -61,5 +57,5 @@ edit-tfvars:
 
 # Destroy Terraform resources
 [confirm("Are you sure you want to destroy all resources?")]
-destroy: validate-tailscale ensure-init
+destroy: validate-tailscale
     k3s destroy

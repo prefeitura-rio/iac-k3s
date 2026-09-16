@@ -31,7 +31,7 @@ resource "helm_release" "prefect_worker" {
   name       = "prefect-worker"
   repository = "https://prefecthq.github.io/prefect-helm"
   chart      = "prefect-worker"
-  version    = "2025.12.31221620"
+  version    = "2026.9.14141910"
   namespace  = kubernetes_namespace_v1.prefect.metadata[0].name
   values = [yamlencode({
     rolebinding = { create = true }

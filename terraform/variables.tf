@@ -8,6 +8,18 @@ variable "k3s" {
       workers       = list(object({ name = string, ipv4_address = string }))
     })
   })
+  default = {
+    cluster_name           = "k3s"
+    control_plane_hostname = "srv001070"
+    nodes = {
+      control_plane = { ipv4_address = "10.2.230.10" }
+      workers = [
+        { name = "srv001071", ipv4_address = "10.2.230.11" },
+        { name = "srv001072", ipv4_address = "10.2.230.12" },
+        { name = "srv001073", ipv4_address = "10.2.230.13" },
+      ]
+    }
+  }
 }
 
 variable "kubeconfig_path" {
@@ -65,15 +77,25 @@ variable "datametrica" {
 }
 
 variable "cloudsql_proxies" {
-  description = "CloudSQL proxy configurations"
-  type = map(object({
-    instance_name   = string
-    instance_region = string
-    project_id      = string
-    sa_key          = string
-    port            = string
-    private         = optional(bool, false)
-  }))
+  description = "CloudSQL proxy configurations sharing one service-account key"
+  type = object({
+    sa_key = string
+    proxies = map(object({
+      instance_name   = string
+      instance_region = string
+      project_id      = string
+      port            = string
+      private         = optional(bool, false)
+    }))
+  })
+}
+
+variable "airbyte" {
+  description = "Airbyte external storage credentials"
+  sensitive   = true
+  type = object({
+    gcs_sa_key = string
+  })
 }
 
 variable "jwks_mirror_public_hostname" {

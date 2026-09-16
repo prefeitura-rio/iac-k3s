@@ -1,5 +1,5 @@
 locals {
-  cloudsql_proxy_keys = keys(var.cloudsql_proxies)
+  cloudsql_proxy_keys = keys(var.cloudsql_proxies.proxies)
 }
 
 resource "kubernetes_namespace_v1" "cloudsql_proxy" {
@@ -9,7 +9,7 @@ resource "kubernetes_namespace_v1" "cloudsql_proxy" {
 }
 
 resource "kubernetes_config_map_v1" "cloudsql_proxy" {
-  for_each = var.cloudsql_proxies
+  for_each = var.cloudsql_proxies.proxies
 
   metadata {
     name      = "${each.key}-config"
@@ -23,7 +23,7 @@ resource "kubernetes_config_map_v1" "cloudsql_proxy" {
 }
 
 resource "kubernetes_secret_v1" "cloudsql_proxy" {
-  for_each = var.cloudsql_proxies
+  for_each = var.cloudsql_proxies.proxies
 
   metadata {
     name      = "${each.key}-sa-key"
@@ -31,13 +31,13 @@ resource "kubernetes_secret_v1" "cloudsql_proxy" {
   }
 
   data = {
-    "service-account-key.json" = base64decode(each.value.sa_key)
+    "service-account-key.json" = base64decode(var.cloudsql_proxies.sa_key)
   }
 }
 
 
 resource "helm_release" "cloudsql_proxy" {
-  for_each   = var.cloudsql_proxies
+  for_each   = var.cloudsql_proxies.proxies
   depends_on = [kubernetes_config_map_v1.cloudsql_proxy, kubernetes_secret_v1.cloudsql_proxy]
   name       = each.key
   namespace  = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name

@@ -49,15 +49,25 @@ variable "infisical" {
 }
 
 variable "cloudsql_proxies" {
-  description = "CloudSQL proxy configurations"
-  type = map(object({
-    instance_name   = string
-    instance_region = string
-    project_id      = string
-    sa_key          = string
-    port            = string
-    private         = optional(bool, false)
-  }))
+  description = "CloudSQL proxy configurations sharing one service-account key"
+  type = object({
+    sa_key = string
+    proxies = map(object({
+      instance_name   = string
+      instance_region = string
+      project_id      = string
+      port            = string
+      private         = optional(bool, false)
+    }))
+  })
+}
+
+variable "airbyte" {
+  description = "Airbyte external storage credentials"
+  sensitive   = true
+  type = object({
+    gcs_sa_key = string
+  })
 }
 
 variable "datametrica" {
@@ -66,6 +76,12 @@ variable "datametrica" {
     host = string
     port = optional(number, 1433)
   })
+}
+
+variable "proxy_allowed_cidrs" {
+  description = "CIDR ranges allowed to use the Tailscale proxy"
+  type        = list(string)
+  default     = ["100.64.0.0/10"]
 }
 
 variable "jwks_mirror_public_hostname" {

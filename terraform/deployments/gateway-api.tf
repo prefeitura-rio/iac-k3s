@@ -2,7 +2,7 @@ resource "helm_release" "gateway_api_crds" {
   name       = "gateway-api-crds"
   repository = "https://wiremind.github.io/wiremind-helm-charts"
   chart      = "gateway-api-crds"
-  version    = "1.6.0"
+  version    = "1.6.2"
   namespace  = "kube-system"
 }
 
@@ -10,7 +10,7 @@ resource "helm_release" "nginx_gateway_fabric" {
   name             = "nginx-gateway-fabric"
   repository       = "oci://ghcr.io/nginx/charts"
   chart            = "nginx-gateway-fabric"
-  version          = "2.6.7"
+  version          = "2.7.2"
   namespace        = "nginx-gateway"
   create_namespace = true
   depends_on       = [helm_release.gateway_api_crds]

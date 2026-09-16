@@ -1,10 +1,30 @@
+resource "kubernetes_namespace_v1" "airbyte" {
+  metadata {
+    name = "airbyte"
+  }
+}
+
+resource "kubernetes_secret_v1" "airbyte_gcs_credentials" {
+  depends_on = [kubernetes_namespace_v1.airbyte]
+
+  metadata {
+    name      = "airbyte-gcs-credentials"
+    namespace = "airbyte"
+  }
+
+  data = {
+    GOOGLE_APPLICATION_CREDENTIALS_JSON = base64decode(var.airbyte.gcs_sa_key)
+  }
+}
+
 resource "helm_release" "airbyte" {
+  depends_on       = [kubernetes_secret_v1.airbyte_gcs_credentials]
   name             = "airbyte"
   repository       = "https://airbytehq.github.io/charts"
   chart            = "airbyte"
-  version          = "2.0.19"
+  version          = "2.3.0"
   namespace        = "airbyte"
-  create_namespace = true
+  create_namespace = false
   timeout          = 3600
 
   values = [yamlencode({
@@ -12,6 +32,28 @@ resource "helm_release" "airbyte" {
       airbyteUrl = "airbyte.${var.tailscale.domain}"
       edition    = "community"
       auth       = { enabled = false }
+      env_vars = {
+        MAX_CHECK_WORKERS             = "5"
+        MAX_SYNC_WORKERS              = "2"
+        WORKLOAD_LAUNCHER_PARALLELISM = "2"
+      }
+      storage = {
+        type       = "gcs"
+        secretName = "airbyte-gcs-credentials"
+        bucket = {
+          log             = "rj-iplanrio-dia-airbyte"
+          auditLogging    = "rj-iplanrio-dia-airbyte"
+          state           = "rj-iplanrio-dia-airbyte"
+          workloadOutput  = "rj-iplanrio-dia-airbyte"
+          activityPayload = "rj-iplanrio-dia-airbyte"
+        }
+        gcs = {
+          credentialsSecretName = "airbyte-gcs-credentials"
+        }
+      }
+    }
+    minio = {
+      enabled = false
     }
     server = {
       resources = {
@@ -21,8 +63,8 @@ resource "helm_release" "airbyte" {
     }
     temporal = {
       resources = {
-        requests = { cpu = "300m", memory = "1Gi" }
-        limits   = { cpu = "1000m", memory = "2Gi" }
+        requests = { cpu = "1", memory = "2Gi" }
+        limits   = { cpu = "2", memory = "4Gi" }
       }
     }
     workloadLauncher = {

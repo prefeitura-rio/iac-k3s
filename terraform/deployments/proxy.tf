@@ -14,14 +14,17 @@ resource "kubernetes_config_map_v1" "squid_config" {
     "squid.conf" = <<-EOF
       http_port 3128
 
-      # access control - allow all
-      acl all src 0.0.0.0/0
+      # allow access only from the Tailscale address range
+%{for cidr in var.proxy_allowed_cidrs~}
+      acl allowed_clients src ${cidr}
+%{endfor~}
 
       # allow CONNECT method for SMTP tunneling
       acl CONNECT method CONNECT
       acl smtp_ports port 25 465 587
-      http_access allow CONNECT smtp_ports
-      http_access allow all
+      http_access allow CONNECT smtp_ports allowed_clients
+      http_access allow allowed_clients
+      http_access deny all
 
       # disable caching
       cache deny all
@@ -71,7 +74,7 @@ resource "kubernetes_deployment_v1" "squid" {
       spec {
         container {
           name  = "squid"
-          image = "ubuntu/squid:latest"
+          image = "ubuntu/squid:6.13-25.10_edge"
 
           port {
             name           = "proxy"
@@ -173,7 +176,7 @@ resource "kubernetes_deployment_v1" "datametrica" {
       spec {
         container {
           name  = "nginx"
-          image = "nginx:alpine"
+          image = "nginx:1.29-alpine"
 
           port {
             name           = "mssql"
