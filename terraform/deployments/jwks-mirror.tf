@@ -93,7 +93,7 @@ resource "kubectl_manifest" "jwks_mirror_tailscale_ingress" {
       namespace = "jwks-mirror"
       annotations = {
         "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix},tag:jwks-mirror"
-        "tailscale.com/hostname" = "jwks-mirror"
+        "tailscale.com/hostname" = "jwks-mirror-${var.tailscale.suffix}"
       }
     }
 
@@ -105,7 +105,7 @@ resource "kubectl_manifest" "jwks_mirror_tailscale_ingress" {
           port = { number = 8080 }
         }
       }
-      tls = [{ hosts = ["jwks-mirror.${var.tailscale.domain}"] }]
+      tls = [{ hosts = ["jwks-mirror-${var.tailscale.suffix}.${var.tailscale.domain}"] }]
     }
   })
 }

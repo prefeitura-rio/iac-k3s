@@ -1,7 +1,3 @@
-locals {
-  nameserver_ip = "100.100.100.100"
-}
-
 resource "kubernetes_namespace_v1" "tailscale" {
   metadata {
     name = "tailscale"
@@ -16,6 +12,10 @@ resource "helm_release" "tailscale_operator" {
   namespace  = kubernetes_namespace_v1.tailscale.metadata[0].name
 
   set = [
+    {
+      name  = "operatorConfig.defaultTags[0]"
+      value = "tag:k8s-${var.tailscale.suffix}"
+    },
     {
       name  = "operatorConfig.hostname"
       value = "tailscale-operator-${var.tailscale.suffix}"
@@ -54,6 +54,22 @@ resource "kubectl_manifest" "tailscale_dnsconfig" {
       }
     }
   })
+}
+
+resource "time_sleep" "wait_for_tailscale_dnsconfig" {
+  depends_on      = [kubectl_manifest.tailscale_dnsconfig]
+  create_duration = "30s"
+}
+
+data "kubernetes_resource" "tailscale_dnsconfig" {
+  api_version = "tailscale.com/v1alpha1"
+  kind        = "DNSConfig"
+
+  metadata {
+    name = "ts-dns"
+  }
+
+  depends_on = [time_sleep.wait_for_tailscale_dnsconfig]
 }
 
 resource "kubectl_manifest" "tailscale_egress_proxyclass" {
@@ -107,7 +123,7 @@ resource "kubectl_manifest" "coredns_config" {
         ts.net {
             errors
             cache 30
-            forward . ${local.nameserver_ip}
+            forward . ${data.kubernetes_resource.tailscale_dnsconfig.object.status.nameserver.ip}
         }
         import /etc/coredns/custom/*.server
       EOF

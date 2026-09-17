@@ -4,6 +4,22 @@ resource "kubernetes_namespace_v1" "airbyte" {
   }
 }
 
+resource "kubernetes_secret_v1" "airbyte_database_credentials" {
+  depends_on = [kubernetes_namespace_v1.airbyte]
+
+  metadata {
+    name      = "airbyte-database-credentials"
+    namespace = "airbyte"
+  }
+
+  data = {
+    DATABASE_USER                    = var.airbyte.database.username
+    DATABASE_PASSWORD                = var.airbyte.database.password
+    CONFIG_DATABASE_REPLICA_USER     = var.airbyte.database.username
+    CONFIG_DATABASE_REPLICA_PASSWORD = var.airbyte.database.password
+  }
+}
+
 resource "kubernetes_secret_v1" "airbyte_gcs_credentials" {
   depends_on = [kubernetes_namespace_v1.airbyte]
 
@@ -17,8 +33,34 @@ resource "kubernetes_secret_v1" "airbyte_gcs_credentials" {
   }
 }
 
+resource "kubectl_manifest" "airbyte_cloudsql_egress_service" {
+  depends_on = [helm_release.tailscale_operator]
+
+  yaml_body = yamlencode({
+    apiVersion = "v1"
+    kind       = "Service"
+    metadata = {
+      name      = "cloudsql-proxy"
+      namespace = kubernetes_namespace_v1.airbyte.metadata[0].name
+      annotations = {
+        "tailscale.com/proxy-class"  = "egress"
+        "tailscale.com/tags"         = "tag:k8s-${var.tailscale.suffix},tag:airbyte"
+        "tailscale.com/tailnet-fqdn" = "cloudsql-proxy.${var.tailscale.domain}"
+      }
+    }
+    spec = {
+      type         = "ExternalName"
+      externalName = "placeholder"
+    }
+  })
+}
+
 resource "helm_release" "airbyte" {
-  depends_on       = [kubernetes_secret_v1.airbyte_gcs_credentials]
+  depends_on = [
+    kubectl_manifest.airbyte_cloudsql_egress_service,
+    kubernetes_secret_v1.airbyte_database_credentials,
+    kubernetes_secret_v1.airbyte_gcs_credentials,
+  ]
   name             = "airbyte"
   repository       = "https://airbytehq.github.io/charts"
   chart            = "airbyte"
@@ -29,13 +71,22 @@ resource "helm_release" "airbyte" {
 
   values = [yamlencode({
     global = {
-      airbyteUrl = "airbyte.${var.tailscale.domain}"
+      airbyteUrl = "airbyte-${var.tailscale.suffix}.${var.tailscale.domain}"
       edition    = "community"
       auth       = { enabled = false }
       env_vars = {
         MAX_CHECK_WORKERS             = "5"
         MAX_SYNC_WORKERS              = "2"
         WORKLOAD_LAUNCHER_PARALLELISM = "2"
+      }
+      database = {
+        type              = "internal"
+        secretName        = "airbyte-database-credentials"
+        host              = "cloudsql-proxy.airbyte.svc.cluster.local"
+        port              = 5432
+        name              = "airbyte"
+        userSecretKey     = "DATABASE_USER"
+        passwordSecretKey = "DATABASE_PASSWORD"
       }
       storage = {
         type       = "gcs"
@@ -53,6 +104,9 @@ resource "helm_release" "airbyte" {
       }
     }
     minio = {
+      enabled = false
+    }
+    postgresql = {
       enabled = false
     }
     server = {
@@ -113,7 +167,7 @@ resource "kubectl_manifest" "airbyte_tailscale_ingress" {
       namespace = helm_release.airbyte.namespace
       annotations = {
         "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix},tag:airbyte"
-        "tailscale.com/hostname" = "airbyte"
+        "tailscale.com/hostname" = "airbyte-${var.tailscale.suffix}"
       }
     }
 
@@ -131,7 +185,7 @@ resource "kubectl_manifest" "airbyte_tailscale_ingress" {
       tls = [
         {
           hosts = [
-            "airbyte.${var.tailscale.domain}"
+            "airbyte-${var.tailscale.suffix}.${var.tailscale.domain}"
           ]
         }
       ]

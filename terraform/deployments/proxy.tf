@@ -74,7 +74,7 @@ resource "kubernetes_deployment_v1" "squid" {
       spec {
         container {
           name  = "squid"
-          image = "ubuntu/squid:6.13-25.10_edge"
+          image = "ubuntu/squid:6.13-25.04_edge"
 
           port {
             name           = "proxy"
@@ -239,7 +239,7 @@ resource "kubernetes_service_v1" "squid" {
     }
     annotations = {
       "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix},tag:proxy"
-      "tailscale.com/hostname" = "proxy"
+      "tailscale.com/hostname" = "proxy-${var.tailscale.suffix}"
     }
   }
 
@@ -269,7 +269,7 @@ resource "kubernetes_service_v1" "datametrica" {
     }
     annotations = {
       "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix},tag:proxy"
-      "tailscale.com/hostname" = "datametrica"
+      "tailscale.com/hostname" = "datametrica-${var.tailscale.suffix}"
     }
   }
 

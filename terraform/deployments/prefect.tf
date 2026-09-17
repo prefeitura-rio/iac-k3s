@@ -41,7 +41,7 @@ resource "helm_release" "prefect_worker" {
       autoscaling               = { enabled = false }
       replicaCount              = 1
       config = {
-        workPool        = "k3s-pool"
+        workPool        = "onprem-pool"
         limit           = 12
         prefetchSeconds = 30
         baseJobTemplate = {
@@ -124,7 +124,7 @@ resource "kubectl_manifest" "prefect_egress_service" {
     apiVersion = "v1"
     kind       = "Service"
     metadata = {
-      name      = "worker-k3s"
+      name      = "worker-${var.tailscale.suffix}"
       namespace = "prefect"
       annotations = {
         "tailscale.com/proxy-class"  = "egress"

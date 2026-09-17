@@ -62,6 +62,7 @@ resource "kubectl_manifest" "intranet_gateway" {
       gatewayClassName = "nginx"
       listeners = [{
         name          = "https"
+        hostname      = var.jwks_mirror_public_hostname
         port          = 443
         protocol      = "HTTPS"
         allowedRoutes = { namespaces = { from = "All" } }

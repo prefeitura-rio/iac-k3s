@@ -48,25 +48,15 @@ variable "infisical" {
   })
 }
 
-variable "cloudsql_proxies" {
-  description = "CloudSQL proxy configurations sharing one service-account key"
-  type = object({
-    sa_key = string
-    proxies = map(object({
-      instance_name   = string
-      instance_region = string
-      project_id      = string
-      port            = string
-      private         = optional(bool, false)
-    }))
-  })
-}
-
 variable "airbyte" {
-  description = "Airbyte external storage credentials"
+  description = "Airbyte external storage and database credentials"
   sensitive   = true
   type = object({
     gcs_sa_key = string
+    database = object({
+      username = string
+      password = string
+    })
   })
 }
 
