@@ -4,6 +4,11 @@ resource "kubernetes_namespace_v1" "airbyte" {
   }
 }
 
+resource "random_password" "airbyte_database" {
+  length  = 32
+  special = false
+}
+
 resource "kubernetes_secret_v1" "airbyte_database_credentials" {
   depends_on = [kubernetes_namespace_v1.airbyte]
 
@@ -13,10 +18,10 @@ resource "kubernetes_secret_v1" "airbyte_database_credentials" {
   }
 
   data = {
-    DATABASE_USER                    = var.airbyte.database.username
-    DATABASE_PASSWORD                = var.airbyte.database.password
-    CONFIG_DATABASE_REPLICA_USER     = var.airbyte.database.username
-    CONFIG_DATABASE_REPLICA_PASSWORD = var.airbyte.database.password
+    DATABASE_USER                    = "airbyte"
+    DATABASE_PASSWORD                = random_password.airbyte_database.result
+    CONFIG_DATABASE_REPLICA_USER     = "airbyte"
+    CONFIG_DATABASE_REPLICA_PASSWORD = random_password.airbyte_database.result
   }
 }
 
@@ -30,6 +35,7 @@ resource "kubernetes_secret_v1" "airbyte_gcs_credentials" {
 
   data = {
     GOOGLE_APPLICATION_CREDENTIALS_JSON = base64decode(var.airbyte.gcs_sa_key)
+    "gcp.json"                          = base64decode(var.airbyte.gcs_sa_key)
   }
 }
 
@@ -51,6 +57,20 @@ resource "kubectl_manifest" "airbyte_cloudsql_egress_service" {
     spec = {
       type         = "ExternalName"
       externalName = "placeholder"
+      ports = [
+        {
+          name       = "iplan"
+          port       = 5432
+          protocol   = "TCP"
+          targetPort = 5432
+        },
+        {
+          name       = "danfe"
+          port       = 10000
+          protocol   = "TCP"
+          targetPort = 10000
+        }
+      ]
     }
   })
 }
@@ -82,7 +102,6 @@ resource "helm_release" "airbyte" {
       database = {
         type              = "internal"
         secretName        = "airbyte-database-credentials"
-        host              = "cloudsql-proxy.airbyte.svc.cluster.local"
         port              = 5432
         name              = "airbyte"
         userSecretKey     = "DATABASE_USER"
@@ -107,9 +126,34 @@ resource "helm_release" "airbyte" {
       enabled = false
     }
     postgresql = {
-      enabled = false
+      enabled            = true
+      postgresqlUsername = "airbyte"
+      postgresqlPassword = random_password.airbyte_database.result
+      postgresqlDatabase = "airbyte"
+      image = {
+        repository = "postgres"
+        tag        = "17"
+      }
+      podSecurityContext = {
+        fsGroup = 999
+      }
+      containerSecurityContext = {
+        allowPrivilegeEscalation = false
+        runAsNonRoot             = true
+        runAsUser                = 999
+        runAsGroup               = 999
+        readOnlyRootFilesystem   = false
+        capabilities             = { drop = ["ALL"] }
+        seccompProfile           = { type = "RuntimeDefault" }
+      }
+      storage = {
+        volumeClaimValue = "10Gi"
+      }
     }
     server = {
+      livenessProbe = {
+        enabled = false
+      }
       resources = {
         requests = { cpu = "500m", memory = "2Gi" }
         limits   = { cpu = "1000m", memory = "4Gi" }
