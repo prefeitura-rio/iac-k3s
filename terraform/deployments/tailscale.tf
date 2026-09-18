@@ -81,6 +81,11 @@ resource "kubectl_manifest" "tailscale_egress_proxyclass" {
       name = "egress"
     }
     spec = {
+      statefulSet = {
+        pod = {
+          hostNetwork = true
+        }
+      }
       tailscale = {
         acceptRoutes = true
       }
