@@ -151,6 +151,16 @@ locals {
       project_slug = "prefect-jobs-v-l3-v"
       env_slug     = "staging"
     }
+    crm-registry-prod = {
+      secret_name  = "prefect-jobs-crm-registry-secrets"
+      project_slug = "prefect-jobs-crm-registry-gdl-b"
+      env_slug     = "prod"
+    }
+    crm-registry-staging = {
+      secret_name  = "prefect-jobs-crm-registry-secrets-staging"
+      project_slug = "prefect-jobs-crm-registry-gdl-b"
+      env_slug     = "staging"
+    }
   }
 }
 
