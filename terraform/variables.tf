@@ -51,6 +51,7 @@ variable "tailscale" {
     domain  = string
     suffix  = string
     tailnet = string
+    users   = optional(set(string), ["phrmendes@github"])
     oauth = object({
       client_id     = string
       client_secret = string
@@ -73,6 +74,14 @@ variable "datametrica" {
   type = object({
     host = string
     port = optional(number, 1433)
+  })
+}
+
+variable "cloudsql_proxy" {
+  description = "Cloud SQL Proxy service-account credentials"
+  sensitive   = true
+  type = object({
+    sa_key = string
   })
 }
 

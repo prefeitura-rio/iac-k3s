@@ -35,6 +35,31 @@ resource "helm_release" "tailscale_operator" {
   ]
 }
 
+resource "kubectl_manifest" "tailscale_api_server_cluster_admin" {
+  count      = length(var.tailscale.users) > 0 ? 1 : 0
+  depends_on = [helm_release.tailscale_operator]
+
+  yaml_body = yamlencode({
+    apiVersion = "rbac.authorization.k8s.io/v1"
+    kind       = "ClusterRoleBinding"
+    metadata = {
+      name = "tailscale-api-server-cluster-admin"
+    }
+    roleRef = {
+      apiGroup = "rbac.authorization.k8s.io"
+      kind     = "ClusterRole"
+      name     = "cluster-admin"
+    }
+    subjects = [
+      for user in var.tailscale.users : {
+        apiGroup = "rbac.authorization.k8s.io"
+        kind     = "User"
+        name     = user
+      }
+    ]
+  })
+}
+
 resource "kubectl_manifest" "tailscale_dnsconfig" {
   depends_on        = [helm_release.tailscale_operator]
   force_conflicts   = true

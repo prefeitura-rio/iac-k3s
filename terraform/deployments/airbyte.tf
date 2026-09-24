@@ -39,45 +39,9 @@ resource "kubernetes_secret_v1" "airbyte_gcs_credentials" {
   }
 }
 
-resource "kubectl_manifest" "airbyte_cloudsql_egress_service" {
-  depends_on = [helm_release.tailscale_operator]
-
-  yaml_body = yamlencode({
-    apiVersion = "v1"
-    kind       = "Service"
-    metadata = {
-      name      = "cloudsql-proxy"
-      namespace = kubernetes_namespace_v1.airbyte.metadata[0].name
-      annotations = {
-        "tailscale.com/proxy-class"  = "egress"
-        "tailscale.com/tags"         = "tag:k8s-${var.tailscale.suffix},tag:airbyte"
-        "tailscale.com/tailnet-fqdn" = "cloudsql-proxy.${var.tailscale.domain}"
-      }
-    }
-    spec = {
-      type         = "ExternalName"
-      externalName = "placeholder"
-      ports = [
-        {
-          name       = "iplan"
-          port       = 5432
-          protocol   = "TCP"
-          targetPort = 5432
-        },
-        {
-          name       = "danfe"
-          port       = 10000
-          protocol   = "TCP"
-          targetPort = 10000
-        }
-      ]
-    }
-  })
-}
-
 resource "helm_release" "airbyte" {
   depends_on = [
-    kubectl_manifest.airbyte_cloudsql_egress_service,
+    helm_release.cloudsql_proxy,
     kubernetes_secret_v1.airbyte_database_credentials,
     kubernetes_secret_v1.airbyte_gcs_credentials,
   ]

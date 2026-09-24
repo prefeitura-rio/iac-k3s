@@ -21,6 +21,7 @@ variable "tailscale" {
     tailnet = string
     domain  = string
     suffix  = string
+    users   = optional(set(string), [])
     oauth = object({
       client_id     = string
       client_secret = string
@@ -45,6 +46,14 @@ variable "infisical" {
     address       = string
     client_id     = string
     client_secret = string
+  })
+}
+
+variable "cloudsql_proxy" {
+  description = "Cloud SQL Proxy service-account credentials"
+  sensitive   = true
+  type = object({
+    sa_key = string
   })
 }
 
