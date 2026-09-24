@@ -28,7 +28,7 @@ resource "helm_release" "cloudsql_proxy" {
       {
         project         = "rj-iplanrio-dia"
         instance        = "postgres"
-        serviceName     = "postgres"
+        serviceName     = "iplan"
         region          = "us-central1"
         port            = 5432
         listenPort      = 5432
@@ -40,7 +40,7 @@ resource "helm_release" "cloudsql_proxy" {
         serviceName     = "danfe"
         region          = "us-central1"
         port            = 3306
-        listenPort      = 10000
+        listenPort      = 3306
         healthCheckPort = 9091
       }
     ]
