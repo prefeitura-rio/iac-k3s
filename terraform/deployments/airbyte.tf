@@ -63,6 +63,21 @@ resource "helm_release" "airbyte" {
         MAX_SYNC_WORKERS              = "2"
         WORKLOAD_LAUNCHER_PARALLELISM = "2"
       }
+      workloads = {
+        resources = {
+          useConnectorResourceDefaults = false
+          mainContainer = {
+            cpu = {
+              request = "2"
+              limit   = "6"
+            }
+            memory = {
+              request = "2Gi"
+              limit   = "8Gi"
+            }
+          }
+        }
+      }
       database = {
         type              = "internal"
         secretName        = "airbyte-database-credentials"

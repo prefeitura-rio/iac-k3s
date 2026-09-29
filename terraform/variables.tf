@@ -17,6 +17,8 @@ variable "k3s" {
         { name = "srv001071", ipv4_address = "10.2.230.11" },
         { name = "srv001072", ipv4_address = "10.2.230.12" },
         { name = "srv001073", ipv4_address = "10.2.230.13" },
+        { name = "grv001074", ipv4_address = "10.2.230.14" },
+        { name = "grv001075", ipv4_address = "10.2.230.15" },
       ]
     }
   }
