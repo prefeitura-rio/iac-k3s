@@ -160,11 +160,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1790787506,
-        "narHash": "sha256-yqU4hF8Vpqi1FY1cVvfVamfmyn4npQivfp0aBFUUnfg=",
+        "lastModified": 1790793332,
+        "narHash": "sha256-6KwcrRy0qmzNNdzP16JtBfjgVcuPu4KKy1mj21hU4n4=",
         "owner": "prefeitura-rio",
         "repo": "flakes",
-        "rev": "192142dc77d3e70b22f17d16428d6f12ff1a91b5",
+        "rev": "c70a598d48cceb1b597153c4908b4753d57732f0",
         "type": "github"
       },
       "original": {
