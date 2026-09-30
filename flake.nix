@@ -34,14 +34,6 @@
               language = "system";
               pass_filenames = false;
             };
-            check-tfvars = {
-              enable = true;
-              name = "check-unencrypted-tfvars";
-              entry = "${prefrio.packages.${system}.prefrio}/bin/prefrio check-tfvars terraform\\.tfvars\\.json";
-              language = "system";
-              pass_filenames = false;
-              always_run = true;
-            };
           };
         };
       in
@@ -53,7 +45,6 @@
           packages = [
             prefrio.packages.${system}.deps
             prefrio.packages.${system}.prefrio
-            prefrio.packages.${system}.k3s
           ]
           ++ (with pkgs; [
             ansible
