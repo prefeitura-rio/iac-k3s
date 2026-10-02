@@ -58,22 +58,27 @@ resource "helm_release" "airbyte" {
       airbyteUrl = "airbyte-${var.tailscale.suffix}.${var.tailscale.domain}"
       edition    = "community"
       auth       = { enabled = false }
-      env_vars = {
-        MAX_CHECK_WORKERS             = "5"
-        MAX_SYNC_WORKERS              = "2"
-        WORKLOAD_LAUNCHER_PARALLELISM = "2"
-      }
       workloads = {
         resources = {
           useConnectorResourceDefaults = false
           mainContainer = {
             cpu = {
-              request = "2"
+              request = "1"
               limit   = "6"
             }
             memory = {
-              request = "2Gi"
-              limit   = "8Gi"
+              request = "3Gi"
+              limit   = "12Gi"
+            }
+          }
+          replication = {
+            cpu = {
+              request = "1"
+              limit   = "4"
+            }
+            memory = {
+              request = "1Gi"
+              limit   = "4Gi"
             }
           }
         }
@@ -138,15 +143,30 @@ resource "helm_release" "airbyte" {
         limits   = { cpu = "1000m", memory = "4Gi" }
       }
     }
+    worker = {
+      maxSyncWorkers  = 5
+      maxCheckWorkers = 5
+      resources = {
+        requests = { cpu = "500m", memory = "2Gi" }
+        limits   = { cpu = "2000m", memory = "4Gi" }
+      }
+    }
+    manifestServer = {
+      resources = {
+        requests = { cpu = "50m", memory = "256Mi" }
+        limits   = { cpu = "500m", memory = "1Gi" }
+      }
+    }
     temporal = {
       resources = {
-        requests = { cpu = "1", memory = "2Gi" }
+        requests = { cpu = "250m", memory = "1Gi" }
         limits   = { cpu = "2", memory = "4Gi" }
       }
     }
     workloadLauncher = {
+      parallelism = 5
       resources = {
-        requests = { cpu = "500m", memory = "2Gi" }
+        requests = { cpu = "500m", memory = "1Gi" }
         limits   = { cpu = "2000m", memory = "4Gi" }
       }
     }
@@ -164,7 +184,7 @@ resource "helm_release" "airbyte" {
     }
     cron = {
       resources = {
-        requests = { cpu = "50m", memory = "128Mi" }
+        requests = { cpu = "50m", memory = "768Mi" }
         limits   = { cpu = "800m", memory = "1Gi" }
       }
     }
