@@ -53,7 +53,14 @@ variable "tailscale" {
     domain  = string
     suffix  = string
     tailnet = string
-    users   = optional(set(string), ["phrmendes@github"])
+    users = optional(set(string), [
+      "chinchila@github",
+      "fredzolio@github",
+      "gabriel-milan@github",
+      "phrmendes@github",
+      "rayssa-eng@github",
+      "vitorco7@github"
+    ])
     oauth = object({
       client_id     = string
       client_secret = string
