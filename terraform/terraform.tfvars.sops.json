@@ -21,7 +21,7 @@
 		}
 	},
 	"datametrica": {
-		"host": "ENC[AES256_GCM,data:i8qFrZs4R5Tbpg==,iv:RNj5R5xIBV39i3H36jLWIkWIiLk8ReRhQ/uKvC8MkzA=,tag:yeLJU7jOqc91P+YDqbbjtA==,type:str]"
+		"host": "ENC[AES256_GCM,data:LObP+fuwAnKVYw==,iv:5zmJB8uZezan59db4X7GUmy8tQRsA47kcI26gOOmtUs=,tag:y0U098d5sH6ycu7GRMjNKg==,type:str]"
 	},
 	"jwks_mirror_public_hostname": "ENC[AES256_GCM,data:Sq0lLS7w3tQFxJ0wrthT7aG1jE2QpcA=,iv:BrxDmkTqjNvgBlhlmo1o7bzRW1AOXYzIJPSVoBnD5PM=,tag:9/nZtIViWcw6iE3mVh76LA==,type:str]",
 	"cloudsql_proxy": {
@@ -42,8 +42,8 @@
 				"resource_id": "projects/rj-iplanrio-dia/locations/global/keyRings/terraform-k3s/cryptoKeys/sops-prod"
 			}
 		],
-		"lastmodified": "2026-09-25T14:43:20Z",
-		"mac": "ENC[AES256_GCM,data:phqzHoMNcJiTybKnXpunaREbhMmPLi/S2feixJz1UFZz8Rx8sxNipYr5NlJDLiD2vhzlYXvkQJHcFKvcOTUonCVUpwW9z9vyHcPbgCKS2L0nMFxVPA9QdOJxxwabkRMwiL5x8tCAAy9d6BHbEeBIOauOd3A0blaq7I1qGyVmcE8=,iv:nhIwegyn0JFHTnIj5EJ3vkFgoWrxiFhit5K4cNEfAhA=,tag:b67UgqKBmvnDChqwWeNcew==,type:str]",
+		"lastmodified": "2026-10-02T17:53:33Z",
+		"mac": "ENC[AES256_GCM,data:NfoGE07AvOgG3Fh2Jn0ji71lADg9Ta+J7KHvI/fCC7vGJiDHVhfXZgSgOtznVhik8DtRdbbQVDKQU5yhOCkwFlRA4SqjzpxMeTgFtxdNq//2jigsUnK1MuAet9J4vwHyRNexpHmrgZGxjFvgFCAG4zZzlEv0ML5HtQZuDKV6acE=,iv:eKzEmSHeiPLBtqJ0ZYtHovuziDcRFn6CAIlMdZfpEj0=,tag:5QfD0Z4rK6Hwx6PfZYKO8g==,type:str]",
 		"unencrypted_suffix": "_unencrypted",
 		"version": "3.13.2"
 	}

@@ -31,8 +31,8 @@ resource "kubernetes_config_map_v1" "squid_config" {
       cache deny all
 
       # add proxy identification headers
-      request_header_add X-Forwarded-By "${local.proxy_hostname}.${var.tailscale.domain}" all
-      request_header_add Via "1.1 ${local.proxy_hostname}.${var.tailscale.domain} (squid)" all
+      request_header_add X-Forwarded-By "proxy-onprem.squirrel-regulus.ts.net" all
+      request_header_add Via "1.1 proxy-onprem.squirrel-regulus.ts.net (squid)" all
 
       # logging
       access_log stdio:/var/log/squid/access.log squid
