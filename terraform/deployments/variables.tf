@@ -77,12 +77,6 @@ variable "datametrica" {
   })
 }
 
-variable "proxy_allowed_cidrs" {
-  description = "CIDR ranges allowed to use the Tailscale proxy"
-  type        = list(string)
-  default     = ["100.64.0.0/10"]
-}
-
 variable "jwks_mirror_public_hostname" {
   description = "Intranet-only DNS hostname for the JWKS mirror's non-tailnet Ingress -- NOT internet-facing (must have an internal A/CNAME record pointing at the K3s cluster's intranet ingress IP; not managed by this repo, coordinate with whoever owns the DNS zone)"
   type        = string
