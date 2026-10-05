@@ -160,3 +160,75 @@ resource "kubectl_manifest" "suptm_frontend_tailscale_ingress" {
     }
   })
 }
+
+resource "kubectl_manifest" "suptm_backend_infisical_secret" {
+  for_each   = local.suptm_environments
+  depends_on = [helm_release.infisical_secrets_operator, kubernetes_namespace_v1.suptm]
+
+  yaml_body = yamlencode({
+    apiVersion = "secrets.infisical.com/v1alpha1"
+    kind       = "InfisicalSecret"
+    metadata = {
+      name      = "app-suptm-backend-secrets"
+      namespace = each.value.namespace
+    }
+    spec = {
+      authentication = {
+        universalAuth = {
+          secretsScope = {
+            projectSlug = "app-suptm-backend-sn-k7"
+            envSlug     = each.key
+            secretsPath = "/"
+            recursive   = true
+          }
+          credentialsRef = {
+            secretName      = local.infisical_auth_secret_name
+            secretNamespace = helm_release.infisical_secrets_operator.namespace
+          }
+        }
+      }
+      managedKubeSecretReferences = [{
+        secretName      = "app-suptm-backend-secrets"
+        secretNamespace = each.value.namespace
+        creationPolicy  = "Orphan"
+        template        = { includeAllSecrets = true }
+      }]
+    }
+  })
+}
+
+resource "kubectl_manifest" "suptm_frontend_infisical_secret" {
+  for_each   = local.suptm_environments
+  depends_on = [helm_release.infisical_secrets_operator, kubernetes_namespace_v1.suptm]
+
+  yaml_body = yamlencode({
+    apiVersion = "secrets.infisical.com/v1alpha1"
+    kind       = "InfisicalSecret"
+    metadata = {
+      name      = "app-suptm-frontend-secrets"
+      namespace = each.value.namespace
+    }
+    spec = {
+      authentication = {
+        universalAuth = {
+          secretsScope = {
+            projectSlug = "app-suptm-frontend-mkmv"
+            envSlug     = each.key
+            secretsPath = "/"
+            recursive   = true
+          }
+          credentialsRef = {
+            secretName      = local.infisical_auth_secret_name
+            secretNamespace = helm_release.infisical_secrets_operator.namespace
+          }
+        }
+      }
+      managedKubeSecretReferences = [{
+        secretName      = "app-suptm-frontend-secrets"
+        secretNamespace = each.value.namespace
+        creationPolicy  = "Orphan"
+        template        = { includeAllSecrets = true }
+      }]
+    }
+  })
+}
