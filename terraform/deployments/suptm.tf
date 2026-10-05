@@ -134,11 +134,11 @@ resource "kubectl_manifest" "suptm_frontend_tailscale_ingress" {
     apiVersion = "networking.k8s.io/v1"
     kind       = "Ingress"
     metadata = {
-      name      = "${each.value.frontend_release_name}-tailscale"
+      name      = "${each.key == "staging" ? "suptm-staging" : "suptm"}-${var.tailscale.suffix}"
       namespace = each.value.namespace
       annotations = {
         "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix}"
-        "tailscale.com/hostname" = "suptm-${var.tailscale.suffix}"
+        "tailscale.com/hostname" = "${each.key == "staging" ? "suptm-staging" : "suptm"}-${var.tailscale.suffix}"
       }
     }
 
@@ -151,12 +151,12 @@ resource "kubectl_manifest" "suptm_frontend_tailscale_ingress" {
             number = 80
           }
         }
-        tls = [{
-          hosts = [
-            "${each.key == "staging" ? "suptm-staging" : "suptm"}-${var.tailscale.suffix}.${var.tailscale.domain}"
-          ]
-        }]
       }
+      tls = [{
+        hosts = [
+          "${each.key == "staging" ? "suptm-staging" : "suptm"}-${var.tailscale.suffix}.${var.tailscale.domain}"
+        ]
+      }]
     }
   })
 }
