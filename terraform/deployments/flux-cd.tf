@@ -12,7 +12,7 @@ resource "kubernetes_namespace_v1" "flux_cd" {
       "app.kubernetes.io/instance"       = "flux-system"
       "app.kubernetes.io/managed-by"     = "flux-operator"
       "app.kubernetes.io/part-of"        = "flux"
-      "app.kubernetes.io/version"        = "v2.9.4"
+      "app.kubernetes.io/version"        = "v2.9.6"
       "fluxcd.controlplane.io/name"      = "flux"
       "fluxcd.controlplane.io/namespace" = "flux-system"
     }

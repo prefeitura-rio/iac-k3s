@@ -5,12 +5,14 @@ locals {
       branch                = "staging"
       backend_release_name  = "app-suptm-backend-staging"
       frontend_release_name = "app-suptm-frontend-staging"
+      hostname              = "suptm.staging.squirrel-regulus.ts.net"
     }
     prod = {
       namespace             = "suptm"
       branch                = "master"
       backend_release_name  = "app-suptm-backend"
       frontend_release_name = "app-suptm-frontend"
+      hostname              = "suptm.squirrel-regulus.ts.net"
     }
   }
 }
@@ -89,6 +91,37 @@ resource "kubectl_manifest" "suptm_frontend_kustomization" {
         name = each.value.namespace
       }
       path = "./frontend/k8s/${each.key}"
+    }
+  })
+}
+
+resource "kubectl_manifest" "suptm_frontend_httproute" {
+  for_each   = local.suptm_environments
+  depends_on = [kubectl_manifest.intranet_gateway, kubectl_manifest.suptm_frontend_kustomization]
+
+  yaml_body = yamlencode({
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+    metadata = {
+      name      = each.value.frontend_release_name
+      namespace = each.value.namespace
+    }
+    spec = {
+      parentRefs = [{
+        name        = "intranet"
+        namespace   = helm_release.nginx_gateway_fabric.namespace
+        sectionName = "https"
+      }]
+      hostnames = [each.value.hostname]
+      rules = [{
+        matches = [{
+          path = { type = "PathPrefix", value = "/" }
+        }]
+        backendRefs = [{
+          name = each.value.frontend_release_name
+          port = 80
+        }]
+      }]
     }
   })
 }
