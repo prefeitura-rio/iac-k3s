@@ -2,7 +2,7 @@ resource "helm_release" "gateway_api_crds" {
   name       = "gateway-api-crds"
   repository = "https://wiremind.github.io/wiremind-helm-charts"
   chart      = "gateway-api-crds"
-  version    = "1.6.0"
+  version    = "1.6.2"
   namespace  = "kube-system"
 }
 
@@ -10,7 +10,7 @@ resource "helm_release" "nginx_gateway_fabric" {
   name             = "nginx-gateway-fabric"
   repository       = "oci://ghcr.io/nginx/charts"
   chart            = "nginx-gateway-fabric"
-  version          = "2.6.7"
+  version          = "2.7.2"
   namespace        = "nginx-gateway"
   create_namespace = true
   depends_on       = [helm_release.gateway_api_crds]
@@ -62,6 +62,7 @@ resource "kubectl_manifest" "intranet_gateway" {
       gatewayClassName = "nginx"
       listeners = [{
         name          = "https"
+        hostname      = var.jwks_mirror_public_hostname
         port          = 443
         protocol      = "HTTPS"
         allowedRoutes = { namespaces = { from = "All" } }
@@ -71,6 +72,16 @@ resource "kubectl_manifest" "intranet_gateway" {
             kind = "Secret"
           }]
         }
+        },
+        {
+          name          = "https-iplan"
+          hostname      = "*.iplan.dados.rio"
+          port          = 443
+          protocol      = "HTTPS"
+          allowedRoutes = { namespaces = { from = "All" } }
+          tls = {
+            certificateRefs = [{ name = "iplan-wildcard-tls", kind = "Secret" }]
+          }
       }]
     }
   })

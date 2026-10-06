@@ -1,7 +1,8 @@
 module "deployments" {
   count                       = var.kubeconfig_path != "" ? 1 : 0
   source                      = "./deployments"
-  cloudsql_proxies            = var.cloudsql_proxies
+  airbyte                     = var.airbyte
+  cloudsql_proxy              = var.cloudsql_proxy
   datametrica                 = var.datametrica
   github                      = var.github
   infisical                   = var.infisical

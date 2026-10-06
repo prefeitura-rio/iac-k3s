@@ -1,15 +1,9 @@
-provider "kubernetes" {
-  config_path = var.kubeconfig_path
-}
+# Providers read KUBE_CONFIG_PATH at run time. A saved plan keeps
+# var.kubeconfig_path, which points to a deleted temporary file at apply time.
+provider "kubernetes" {}
 
-provider "helm" {
-  kubernetes = {
-    config_path = var.kubeconfig_path
-  }
-}
+provider "helm" {}
 
 provider "kubectl" {
-  config_path      = var.kubeconfig_path
   load_config_file = var.kubeconfig_path != ""
 }
-

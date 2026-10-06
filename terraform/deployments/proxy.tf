@@ -1,3 +1,7 @@
+locals {
+  proxy_hostname = "proxy-${var.tailscale.suffix}"
+}
+
 resource "kubernetes_namespace_v1" "proxy" {
   metadata {
     name = "proxy"
@@ -14,21 +18,21 @@ resource "kubernetes_config_map_v1" "squid_config" {
     "squid.conf" = <<-EOF
       http_port 3128
 
-      # access control - allow all
-      acl all src 0.0.0.0/0
+      # client access is controlled by Tailscale ACL grants on tag:proxy:3128;
+      # the Tailscale operator SNATs client traffic, so squid cannot filter by source IP
 
-      # allow CONNECT method for SMTP tunneling
+      # allow CONNECT tunnels only to HTTPS, Corio API and SMTP ports
       acl CONNECT method CONNECT
-      acl smtp_ports port 25 465 587
-      http_access allow CONNECT smtp_ports
+      acl connect_ports port 443 8086 25 465 587
+      http_access deny CONNECT !connect_ports
       http_access allow all
 
       # disable caching
       cache deny all
 
       # add proxy identification headers
-      request_header_add X-Forwarded-By "proxy.squirrel-regulus.ts.net" all
-      request_header_add Via "1.1 proxy.squirrel-regulus.ts.net (squid)" all
+      request_header_add X-Forwarded-By "proxy-onprem.squirrel-regulus.ts.net" all
+      request_header_add Via "1.1 proxy-onprem.squirrel-regulus.ts.net (squid)" all
 
       # logging
       access_log stdio:/var/log/squid/access.log squid
@@ -66,12 +70,15 @@ resource "kubernetes_deployment_v1" "squid" {
         labels = {
           app = "squid"
         }
+        annotations = {
+          "checksum/config" = sha256(kubernetes_config_map_v1.squid_config.data["squid.conf"])
+        }
       }
 
       spec {
         container {
           name  = "squid"
-          image = "ubuntu/squid:latest"
+          image = "ubuntu/squid:6.13-25.04_edge"
 
           port {
             name           = "proxy"
@@ -173,7 +180,7 @@ resource "kubernetes_deployment_v1" "datametrica" {
       spec {
         container {
           name  = "nginx"
-          image = "nginx:alpine"
+          image = "nginx:1.29-alpine"
 
           port {
             name           = "mssql"
@@ -236,7 +243,7 @@ resource "kubernetes_service_v1" "squid" {
     }
     annotations = {
       "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix},tag:proxy"
-      "tailscale.com/hostname" = "proxy"
+      "tailscale.com/hostname" = local.proxy_hostname
     }
   }
 
@@ -266,7 +273,7 @@ resource "kubernetes_service_v1" "datametrica" {
     }
     annotations = {
       "tailscale.com/tags"     = "tag:k8s-${var.tailscale.suffix},tag:proxy"
-      "tailscale.com/hostname" = "datametrica"
+      "tailscale.com/hostname" = "datametrica-${var.tailscale.suffix}"
     }
   }
 

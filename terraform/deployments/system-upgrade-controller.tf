@@ -1,4 +1,11 @@
+resource "kubernetes_namespace_v1" "cattle_system" {
+  metadata {
+    name = "cattle-system"
+  }
+}
+
 resource "helm_release" "system_upgrade_controller" {
+  depends_on       = [kubernetes_namespace_v1.cattle_system]
   name             = "system-upgrade-controller"
   repository       = "https://charts.rancher.io"
   chart            = "system-upgrade-controller"

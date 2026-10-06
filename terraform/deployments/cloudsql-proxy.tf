@@ -1,86 +1,63 @@
-locals {
-  cloudsql_proxy_keys = keys(var.cloudsql_proxies)
-}
-
 resource "kubernetes_namespace_v1" "cloudsql_proxy" {
   metadata {
     name = "cloudsql-proxy"
   }
 }
 
-resource "kubernetes_config_map_v1" "cloudsql_proxy" {
-  for_each = var.cloudsql_proxies
-
+resource "kubernetes_secret_v1" "cloudsql_proxy_credentials" {
   metadata {
-    name      = "${each.key}-config"
-    namespace = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
-  }
-  data = {
-    CLOUD_SQL_PROJECT_ID      = each.value.project_id
-    CLOUD_SQL_INSTANCE_REGION = each.value.instance_region
-    CLOUD_SQL_INSTANCE_NAME   = each.value.instance_name
-  }
-}
-
-resource "kubernetes_secret_v1" "cloudsql_proxy" {
-  for_each = var.cloudsql_proxies
-
-  metadata {
-    name      = "${each.key}-sa-key"
+    name      = "cloudsql-proxy-credentials"
     namespace = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
   }
 
   data = {
-    "service-account-key.json" = base64decode(each.value.sa_key)
+    "sa.json" = base64decode(var.cloudsql_proxy.sa_key)
   }
 }
-
 
 resource "helm_release" "cloudsql_proxy" {
-  for_each   = var.cloudsql_proxies
-  depends_on = [kubernetes_config_map_v1.cloudsql_proxy, kubernetes_secret_v1.cloudsql_proxy]
-  name       = each.key
+  depends_on = [kubernetes_secret_v1.cloudsql_proxy_credentials]
+  name       = "cloudsql-proxy"
   namespace  = kubernetes_namespace_v1.cloudsql_proxy.metadata[0].name
   repository = "oci://ghcr.io/prefeitura-rio/charts"
   chart      = "cloudsql-proxy"
-  version    = "1.0.2"
+  version    = "2.0.5"
 
   values = [yamlencode({
-    fullnameOverride = each.key
-
-    instance = {
-      configMapRef = {
-        name = kubernetes_config_map_v1.cloudsql_proxy[each.key].metadata[0].name
-        keys = {
-          projectId = "CLOUD_SQL_PROJECT_ID"
-          region    = "CLOUD_SQL_INSTANCE_REGION"
-          name      = "CLOUD_SQL_INSTANCE_NAME"
-        }
+    instances = [
+      {
+        project         = "rj-iplanrio-dia"
+        instance        = "postgres"
+        serviceName     = "iplan"
+        region          = "us-central1"
+        port            = 5432
+        listenPort      = 5432
+        healthCheckPort = 9090
+      },
+      {
+        project         = "rj-sme-danfe-ai"
+        instance        = "mysql"
+        serviceName     = "danfe"
+        region          = "us-central1"
+        port            = 3306
+        listenPort      = 3306
+        healthCheckPort = 9091
       }
-    }
+    ]
 
-    secret = {
-      existingSecret = kubernetes_secret_v1.cloudsql_proxy[each.key].metadata[0].name
+    routing = {
+      strategy = "multiservice"
     }
 
     proxy = {
-      port            = tonumber(each.value.port)
-      privateIp       = each.value.private
-      autoIamAuthn    = false
-      maxConnections  = 100
-      healthCheckPort = 9090 + index(local.cloudsql_proxy_keys, each.key)
+      privateIp      = false
+      autoIamAuthn   = false
+      maxConnections = 150
     }
 
-    resources = {
-      requests = {
-        cpu    = "100m"
-        memory = "128Mi"
-      }
-      limits = {
-        cpu    = "500m"
-        memory = "256Mi"
-      }
+    secret = {
+      existingSecret = kubernetes_secret_v1.cloudsql_proxy_credentials.metadata[0].name
+      key            = "sa.json"
     }
   })]
-
 }

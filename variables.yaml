@@ -5,14 +5,15 @@ agent_group: k3s_workers
 server_config_yaml: |
   write-kubeconfig-mode: "600"
   tls-san:
-    - k3s_control_plane
+    - 10.2.230.10
+    - srv001070.infra.rio.gov.br
   node-taint:
     - "node-role.kubernetes.io/control-plane:NoSchedule"
   disable:
     - servicelb
     - traefik
   kube-apiserver-arg:
-    - service-account-max-token-expiration=30m
+    - service-account-max-token-expiration=1h
   kubelet-arg:
     - image-gc-high-threshold=75
     - image-gc-low-threshold=60

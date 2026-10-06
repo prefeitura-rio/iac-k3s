@@ -1,7 +1,3 @@
-locals {
-  nameserver_ip = try(data.kubernetes_resource.tailscale_dnsconfig.object.status.nameserver.ip, "100.100.100.100")
-}
-
 resource "kubernetes_namespace_v1" "tailscale" {
   metadata {
     name = "tailscale"
@@ -12,10 +8,14 @@ resource "helm_release" "tailscale_operator" {
   name       = "tailscale-operator"
   repository = "https://pkgs.tailscale.com/helmcharts"
   chart      = "tailscale-operator"
-  version    = "1.94.2"
+  version    = "1.102.3"
   namespace  = kubernetes_namespace_v1.tailscale.metadata[0].name
 
   set = [
+    {
+      name  = "operatorConfig.defaultTags[0]"
+      value = "tag:k8s-${var.tailscale.suffix}"
+    },
     {
       name  = "operatorConfig.hostname"
       value = "tailscale-operator-${var.tailscale.suffix}"
@@ -33,6 +33,31 @@ resource "helm_release" "tailscale_operator" {
       value = "true"
     }
   ]
+}
+
+resource "kubectl_manifest" "tailscale_api_server_cluster_admin" {
+  count      = length(var.tailscale.users) > 0 ? 1 : 0
+  depends_on = [helm_release.tailscale_operator]
+
+  yaml_body = yamlencode({
+    apiVersion = "rbac.authorization.k8s.io/v1"
+    kind       = "ClusterRoleBinding"
+    metadata = {
+      name = "tailscale-api-server-cluster-admin"
+    }
+    roleRef = {
+      apiGroup = "rbac.authorization.k8s.io"
+      kind     = "ClusterRole"
+      name     = "cluster-admin"
+    }
+    subjects = [
+      for user in var.tailscale.users : {
+        apiGroup = "rbac.authorization.k8s.io"
+        kind     = "User"
+        name     = user
+      }
+    ]
+  })
 }
 
 resource "kubectl_manifest" "tailscale_dnsconfig" {
@@ -56,6 +81,22 @@ resource "kubectl_manifest" "tailscale_dnsconfig" {
   })
 }
 
+resource "time_sleep" "wait_for_tailscale_dnsconfig" {
+  depends_on      = [kubectl_manifest.tailscale_dnsconfig]
+  create_duration = "30s"
+}
+
+data "kubernetes_resource" "tailscale_dnsconfig" {
+  api_version = "tailscale.com/v1alpha1"
+  kind        = "DNSConfig"
+
+  metadata {
+    name = "ts-dns"
+  }
+
+  depends_on = [time_sleep.wait_for_tailscale_dnsconfig]
+}
+
 resource "kubectl_manifest" "tailscale_egress_proxyclass" {
   depends_on = [helm_release.tailscale_operator]
   yaml_body = yamlencode({
@@ -65,6 +106,11 @@ resource "kubectl_manifest" "tailscale_egress_proxyclass" {
       name = "egress"
     }
     spec = {
+      statefulSet = {
+        pod = {
+          hostNetwork = true
+        }
+      }
       tailscale = {
         acceptRoutes = true
       }
@@ -72,22 +118,8 @@ resource "kubectl_manifest" "tailscale_egress_proxyclass" {
   })
 }
 
-resource "time_sleep" "wait_for_dnsconfig" {
-  depends_on      = [kubectl_manifest.tailscale_dnsconfig]
-  create_duration = "60s"
-}
-
-data "kubernetes_resource" "tailscale_dnsconfig" {
-  api_version = "tailscale.com/v1alpha1"
-  kind        = "DNSConfig"
-  metadata {
-    name = "ts-dns"
-  }
-  depends_on = [time_sleep.wait_for_dnsconfig]
-}
-
 resource "kubectl_manifest" "coredns_config" {
-  depends_on = [data.kubernetes_resource.tailscale_dnsconfig]
+  depends_on = [kubectl_manifest.tailscale_dnsconfig]
   yaml_body = yamlencode({
     apiVersion = "v1"
     kind       = "ConfigMap"
@@ -121,7 +153,7 @@ resource "kubectl_manifest" "coredns_config" {
         ts.net {
             errors
             cache 30
-            forward . ${local.nameserver_ip}
+            forward . ${data.kubernetes_resource.tailscale_dnsconfig.object.status.nameserver.ip}
         }
         import /etc/coredns/custom/*.server
       EOF

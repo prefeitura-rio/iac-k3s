@@ -21,6 +21,7 @@ variable "tailscale" {
     tailnet = string
     domain  = string
     suffix  = string
+    users   = optional(set(string), [])
     oauth = object({
       client_id     = string
       client_secret = string
@@ -48,16 +49,24 @@ variable "infisical" {
   })
 }
 
-variable "cloudsql_proxies" {
-  description = "CloudSQL proxy configurations"
-  type = map(object({
-    instance_name   = string
-    instance_region = string
-    project_id      = string
-    sa_key          = string
-    port            = string
-    private         = optional(bool, false)
-  }))
+variable "cloudsql_proxy" {
+  description = "Cloud SQL Proxy service-account credentials"
+  sensitive   = true
+  type = object({
+    sa_key = string
+  })
+}
+
+variable "airbyte" {
+  description = "Airbyte external storage and database credentials"
+  sensitive   = true
+  type = object({
+    gcs_sa_key = string
+    database = object({
+      username = string
+      password = string
+    })
+  })
 }
 
 variable "datametrica" {
