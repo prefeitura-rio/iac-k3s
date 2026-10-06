@@ -5,14 +5,14 @@ locals {
       branch                = "staging"
       backend_release_name  = "app-suptm-backend-staging"
       frontend_release_name = "app-suptm-frontend-staging"
-      intranet_hostname     = "suptm.staging.iplan.dados.rio"
+      intranet_hostname     = "suptm-onprem.staging.iplan.dados.rio"
     }
     prod = {
       namespace             = "suptm"
       branch                = "master"
       backend_release_name  = "app-suptm-backend"
       frontend_release_name = "app-suptm-frontend"
-      intranet_hostname     = "suptm.iplan.dados.rio"
+      intranet_hostname     = "suptm-onprem.iplan.dados.rio"
     }
   }
 }
@@ -110,7 +110,7 @@ resource "kubectl_manifest" "suptm_frontend_httproute" {
       parentRefs = [{
         name        = "intranet"
         namespace   = helm_release.nginx_gateway_fabric.namespace
-        sectionName = "https"
+        sectionName = "https-iplan"
       }]
       hostnames = [each.value.intranet_hostname]
       rules = [{

@@ -72,6 +72,16 @@ resource "kubectl_manifest" "intranet_gateway" {
             kind = "Secret"
           }]
         }
+        },
+        {
+          name          = "https-iplan"
+          hostname      = "*.iplan.dados.rio"
+          port          = 443
+          protocol      = "HTTPS"
+          allowedRoutes = { namespaces = { from = "All" } }
+          tls = {
+            certificateRefs = [{ name = "iplan-wildcard-tls", kind = "Secret" }]
+          }
       }]
     }
   })
