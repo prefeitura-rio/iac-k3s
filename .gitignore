@@ -9,8 +9,10 @@
 .k3s/*
 !.k3s/.gitkeep
 scripts/pyrightconfig.json
-terraform/terraform.tfvars.json
-!terraform/terraform.tfvars.sops.json
+live/*/terraform.tfvars.json
+!live/*/terraform.tfvars.sops.json
+.terragrunt-cache/
+live/**/.terraform.lock.hcl
 /scripts/__pycache__
 .pre-commit-config.yaml
 *.plan

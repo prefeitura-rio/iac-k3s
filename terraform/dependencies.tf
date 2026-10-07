@@ -1,11 +1,6 @@
 terraform {
   required_version = "~> 1.12"
 
-  backend "gcs" {
-    bucket = "iplanrio-terraform-state"
-    prefix = "k3s"
-  }
-
   required_providers {
     helm = {
       source  = "hashicorp/helm"

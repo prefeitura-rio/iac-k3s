@@ -24,13 +24,6 @@ variable "k3s" {
   }
 }
 
-variable "kubeconfig_path" {
-  description = "Path to the decrypted kubeconfig file (injected at runtime by sops exec-file)"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
 variable "prefect_address" {
   description = "The address of the Prefect server instance"
   type        = string

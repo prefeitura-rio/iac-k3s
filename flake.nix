@@ -42,6 +42,8 @@
 
         devShells.default = pkgs.mkShell {
           inherit (pre-commit) shellHook;
+          TG_WORKING_DIR = "live";
+          KUBE_HOST = "https://tailscale-operator-onprem.squirrel-regulus.ts.net";
           packages = [
             prefrio.packages.${system}.deps
             prefrio.packages.${system}.prefrio

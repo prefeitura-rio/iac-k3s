@@ -1,5 +1,4 @@
 module "deployments" {
-  count                       = var.kubeconfig_path != "" ? 1 : 0
   source                      = "./deployments"
   airbyte                     = var.airbyte
   cloudsql_proxy              = var.cloudsql_proxy

@@ -6,13 +6,22 @@ Infraestrutura como código para cluster K3s em contêineres Incus, utilizando T
 
 ```
 k3s/
-├── terraform/       # Configurações Terraform
-│   ├── deployments/ # Configurações específicas de aplicações
-│   └── files/       # Arquivos gerados (kubeconfig, etc.)
-├── scripts/         # Scripts de deployment
+├── live/k3s/        # Unidade Terragrunt: estado, provedores e variáveis SOPS
+├── terraform/       # Módulo Terraform
+│   └── deployments/ # Configurações específicas de aplicações
 ├── playbook.yaml    # Configuração Ansible
-├── inventory.ini    # Inventário Ansible
-└── justfile         # Automação de tarefas
+└── inventory.ini    # Inventário Ansible
+```
+
+## Uso
+
+O shell Nix define `TG_WORKING_DIR` e `KUBE_HOST` (API do K3s via Tailscale). Conecte-se ao Tailscale e execute:
+
+```
+prefrio tf plan
+prefrio tf apply
+prefrio tf edit-vars
+prefrio k get pods -A
 ```
 
 ## Documentação
