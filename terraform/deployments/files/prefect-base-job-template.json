@@ -172,6 +172,30 @@
         "title": "Active Deadline Seconds",
         "default": 86400,
         "description": "Maximum number of seconds a job is allowed to run before Kubernetes terminates it. Defaults to 86400 (24h). Set to null to disable."
+      },
+      "cpu_request": {
+        "type": "string",
+        "title": "CPU Request",
+        "default": "500m",
+        "description": "CPU reserved for the flow run container (Kubernetes resources.requests.cpu)."
+      },
+      "cpu_limit": {
+        "type": "string",
+        "title": "CPU Limit",
+        "default": "2",
+        "description": "Maximum CPU for the flow run container (Kubernetes resources.limits.cpu)."
+      },
+      "memory_request": {
+        "type": "string",
+        "title": "Memory Request",
+        "default": "4Gi",
+        "description": "Memory reserved for the flow run container (Kubernetes resources.requests.memory). The scheduler places pods by this value; flows that use more than this should raise it."
+      },
+      "memory_limit": {
+        "type": "string",
+        "title": "Memory Limit",
+        "default": "8Gi",
+        "description": "Maximum memory for the flow run container (Kubernetes resources.limits.memory)."
       }
     },
     "definitions": {
@@ -235,12 +259,12 @@
                 "imagePullPolicy": "{{ image_pull_policy }}",
                 "resources": {
                   "requests": {
-                    "cpu": "500m",
-                    "memory": "4Gi"
+                    "cpu": "{{ cpu_request }}",
+                    "memory": "{{ memory_request }}"
                   },
                   "limits": {
-                    "cpu": "2",
-                    "memory": "8Gi"
+                    "cpu": "{{ cpu_limit }}",
+                    "memory": "{{ memory_limit }}"
                   }
                 }
               }
