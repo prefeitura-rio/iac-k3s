@@ -188,7 +188,7 @@
       "memory_request": {
         "type": "string",
         "title": "Memory Request",
-        "default": "4Gi",
+        "default": "2Gi",
         "description": "Memory reserved for the flow run container (Kubernetes resources.requests.memory). The scheduler places pods by this value; flows that use more than this should raise it."
       },
       "memory_limit": {

@@ -144,8 +144,8 @@ resource "helm_release" "airbyte" {
       }
     }
     worker = {
-      maxSyncWorkers  = 5
-      maxCheckWorkers = 5
+      maxSyncWorkers  = 3
+      maxCheckWorkers = 3
       resources = {
         requests = { cpu = "500m", memory = "2Gi" }
         limits   = { cpu = "2000m", memory = "4Gi" }
@@ -164,7 +164,7 @@ resource "helm_release" "airbyte" {
       }
     }
     workloadLauncher = {
-      parallelism = 5
+      parallelism = 3
       resources = {
         requests = { cpu = "500m", memory = "1Gi" }
         limits   = { cpu = "2000m", memory = "4Gi" }

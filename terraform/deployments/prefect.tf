@@ -42,7 +42,7 @@ resource "helm_release" "prefect_worker" {
       replicaCount              = 1
       config = {
         workPool        = "onprem-pool"
-        limit           = 12
+        limit           = 8
         prefetchSeconds = 30
         baseJobTemplate = {
           configuration = templatefile("${path.module}/files/prefect-base-job-template.json", {
