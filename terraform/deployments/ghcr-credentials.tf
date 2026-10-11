@@ -3,6 +3,7 @@ locals {
     [
       "suptm",
       "suptm-staging",
+      "prefect",
     ],
   ))
 
