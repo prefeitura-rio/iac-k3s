@@ -113,7 +113,7 @@ resource "kubernetes_deployment_v1" "dozzle" {
 
         container {
           name              = "dozzle"
-          image             = "amir20/dozzle:v11.3.0"
+          image             = "amir20/dozzle:v11.3.5"
           image_pull_policy = "IfNotPresent"
 
           port {
