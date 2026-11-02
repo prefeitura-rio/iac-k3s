@@ -2,7 +2,7 @@ resource "helm_release" "jwks_mirror" {
   name             = "jwks-mirror"
   repository       = "oci://registry-1.docker.io/cloudpirates"
   chart            = "nginx"
-  version          = "0.16.8"
+  version          = "0.16.14"
   namespace        = "jwks-mirror"
   create_namespace = true
 
